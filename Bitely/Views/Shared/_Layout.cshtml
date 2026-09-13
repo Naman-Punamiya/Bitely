@@ -9,6 +9,7 @@
     <header>
         <nav>
             <a asp-controller="Home" asp-action="Index">Bitely Home</a> | 
+            <a asp-controller="FoodStall" asp-action="Index">Food Stalls</a> | 
             @if (User.Identity != null && User.Identity.IsAuthenticated)
             {
                 <span>Hello, @User.Identity.Name!</span>

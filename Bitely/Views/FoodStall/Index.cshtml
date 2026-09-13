@@ -1,0 +1,52 @@
+@model IEnumerable<Bitely.Models.FoodStall>
+@using System.Security.Claims
+
+@{
+    ViewData["Title"] = "Food Stalls";
+    var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+    var isOwnerRole = User.IsInRole(Bitely.Models.Roles.FoodStallOwner);
+}
+
+<h2>Food Stalls</h2>
+
+@if (isOwnerRole)
+{
+    <p>
+        <a asp-action="Create">Create New Food Stall</a>
+    </p>
+}
+
+<table border="1" cellpadding="8" cellspacing="0">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Location</th>
+            <th>Status</th>
+            <th>Owner</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model)
+        {
+            var isMyStall = currentUserId != null && item.OwnerId.ToString() == currentUserId;
+            <tr>
+                <td>@item.Name</td>
+                <td>@item.Description</td>
+                <td>@item.Location</td>
+                <td>@(item.IsOpen ? "Open" : "Closed")</td>
+                <td>@(item.Owner?.Name ?? item.OwnerId.ToString())</td>
+                <td>
+                    <a asp-action="Details" asp-route-id="@item.Id">Details</a> |
+                    <a asp-controller="Menu" asp-action="Index" asp-route-foodStallId="@item.Id">View Menu</a>
+                    @if (isOwnerRole && isMyStall)
+                    {
+                        @:| <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
+                        <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                    }
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

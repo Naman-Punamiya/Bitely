@@ -12,5 +12,7 @@ namespace Bitely.Data
         }
 
         public DbSet<User> Users { get; set; }
+        public DbSet<FoodStall> FoodStalls { get; set; }
+        public DbSet<MenuItem> MenuItems { get; set; }
     }
 }
