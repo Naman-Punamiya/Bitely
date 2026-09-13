@@ -1,0 +1,69 @@
+@model Bitely.Models.Cart
+
+@{
+    ViewData["Title"] = "Your Cart";
+    decimal total = 0;
+}
+
+<h2>Your Cart</h2>
+
+@if (Model == null || !Model.CartItems.Any())
+{
+    <p>Your cart is empty.</p>
+    <p><a asp-controller="FoodStall" asp-action="Index">Browse Food Stalls</a></p>
+}
+else
+{
+    var stallName = Model.CartItems.FirstOrDefault()?.MenuItem?.FoodStall?.Name ?? "Food Stall";
+    <h3>Stall: @stallName</h3>
+
+    <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Item</th>
+                <th>Price</th>
+                <th>Quantity</th>
+                <th>Subtotal</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var item in Model.CartItems)
+            {
+                var price = item.MenuItem?.Price ?? 0;
+                var subtotal = price * item.Quantity;
+                total += subtotal;
+
+                <tr>
+                    <td>@(item.MenuItem?.Name ?? "Item")</td>
+                    <td>@price.ToString("C")</td>
+                    <td>
+                        <form asp-controller="Cart" asp-action="UpdateQuantity" method="post" style="display:inline-flex; align-items:center;">
+                            <input type="hidden" name="cartItemId" value="@item.Id" />
+                            <input type="number" name="quantity" value="@item.Quantity" min="1" style="width: 60px;" />
+                            <button type="submit">Update</button>
+                        </form>
+                    </td>
+                    <td>@subtotal.ToString("C")</td>
+                    <td>
+                        <form asp-controller="Cart" asp-action="RemoveItem" method="post" style="display:inline;">
+                            <input type="hidden" name="cartItemId" value="@item.Id" />
+                            <button type="submit">Remove</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+
+    <br />
+    <p><strong>Total Amount: @total.ToString("C")</strong></p>
+
+    <div style="display:flex; gap:10px;">
+        <form asp-controller="Cart" asp-action="ClearCart" method="post">
+            <button type="submit">Clear Cart</button>
+        </form>
+
+        <a asp-controller="Order" asp-action="Checkout"><button type="button">Proceed to Checkout</button></a>
+    </div>
+}

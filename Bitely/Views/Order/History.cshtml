@@ -1,0 +1,99 @@
+@model IEnumerable<Bitely.Models.Order>
+@using Bitely.Models
+
+@{
+    ViewData["Title"] = "Order History";
+    var isOwnerRole = User.IsInRole(Roles.FoodStallOwner);
+    var statusOptions = new[] { "Pending", "Preparing", "Ready", "Completed", "Cancelled" };
+}
+
+<h2>Order History</h2>
+
+@if (!Model.Any())
+{
+    <p>No orders found.</p>
+}
+else
+{
+    <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Order #</th>
+                <th>Date</th>
+                @if (isOwnerRole)
+                {
+                    <th>Consumer</th>
+                }
+                else
+                {
+                    <th>Food Stall</th>
+                }
+                <th>Total Amount</th>
+                <th>Payment</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                <tr>
+                    <td>#@order.Id</td>
+                    <td>@order.CreatedAt.ToLocalTime().ToString("g")</td>
+                    @if (isOwnerRole)
+                    {
+                        <td>@(order.Consumer?.Name ?? order.ConsumerId.ToString())</td>
+                    }
+                    else
+                    {
+                        <td>@(order.FoodStall?.Name ?? order.FoodStallId.ToString())</td>
+                    }
+                    <td>@order.TotalAmount.ToString("C")</td>
+                    <td>
+                        @if (order.Payment != null)
+                        {
+                            <span>@order.Payment.Status (@order.Payment.Method)</span>
+                        }
+                        else
+                        {
+                            <span>Unpaid</span>
+                        }
+                    </td>
+                    <td>
+                        @if (isOwnerRole)
+                        {
+                            <form asp-controller="Order" asp-action="UpdateStatus" method="post" style="display:inline-flex; gap:5px;">
+                                <input type="hidden" name="id" value="@order.Id" />
+                                <select name="status">
+                                    @foreach (var s in statusOptions)
+                                    {
+                                        if (s == order.Status)
+                                        {
+                                            <option value="@s" selected="selected">@s</option>
+                                        }
+                                        else
+                                        {
+                                            <option value="@s">@s</option>
+                                        }
+                                    }
+                                </select>
+                                <button type="submit">Update</button>
+                            </form>
+                        }
+                        else
+                        {
+                            <span>@order.Status</span>
+                        }
+                    </td>
+                    <td>
+                        <a asp-controller="Order" asp-action="Details" asp-route-id="@order.Id">Details</a>
+                        @if (!isOwnerRole && order.Payment == null)
+                        {
+                            <span>|</span> <a asp-controller="Payment" asp-action="Checkout" asp-route-orderId="@order.Id">Pay</a>
+                        }
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

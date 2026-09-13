@@ -1,0 +1,56 @@
+@model Bitely.Models.Order
+
+@{
+    ViewData["Title"] = "Order Details";
+}
+
+<h2>Order Details #@Model.Id</h2>
+
+<p><strong>Consumer:</strong> @(Model.Consumer?.Name ?? Model.ConsumerId.ToString())</p>
+<p><strong>Food Stall:</strong> @(Model.FoodStall?.Name ?? Model.FoodStallId.ToString())</p>
+<p><strong>Placed At:</strong> @Model.CreatedAt.ToLocalTime().ToString("g")</p>
+<p><strong>Status:</strong> <span>@Model.Status</span></p>
+<p>
+    <strong>Payment Status:</strong> 
+    @if (Model.Payment != null)
+    {
+        <span>@Model.Payment.Status (@Model.Payment.Method)</span>
+    }
+    else
+    {
+        <span>Unpaid</span>
+        <a asp-controller="Payment" asp-action="Checkout" asp-route-orderId="@Model.Id">[ Pay Now ]</a>
+    }
+</p>
+
+<h3>Items</h3>
+<table border="1" cellpadding="8" cellspacing="0">
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Subtotal</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var item in Model.OrderItems)
+        {
+            var subtotal = item.Price * item.Quantity;
+            <tr>
+                <td>@(item.MenuItem?.Name ?? "Item")</td>
+                <td>@item.Quantity</td>
+                <td>@item.Price.ToString("C")</td>
+                <td>@subtotal.ToString("C")</td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<br />
+<p><strong>Total Amount: @Model.TotalAmount.ToString("C")</strong></p>
+
+<br />
+<p>
+    <a asp-controller="Order" asp-action="History">Back to Order History</a>
+</p>

@@ -1,0 +1,48 @@
+@model Bitely.Models.Cart
+
+@{
+    ViewData["Title"] = "Checkout";
+    decimal total = 0;
+    var stallName = Model?.CartItems.FirstOrDefault()?.MenuItem?.FoodStall?.Name ?? "Food Stall";
+}
+
+<h2>Order Checkout</h2>
+
+<h3>Food Stall: @stallName</h3>
+
+<table border="1" cellpadding="8" cellspacing="0">
+    <thead>
+        <tr>
+            <th>Item</th>
+            <th>Quantity</th>
+            <th>Unit Price</th>
+            <th>Subtotal</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null)
+        {
+            @foreach (var item in Model.CartItems)
+            {
+                var price = item.MenuItem?.Price ?? 0;
+                var subtotal = price * item.Quantity;
+                total += subtotal;
+                <tr>
+                    <td>@(item.MenuItem?.Name ?? "Item")</td>
+                    <td>@item.Quantity</td>
+                    <td>@price.ToString("C")</td>
+                    <td>@subtotal.ToString("C")</td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+<br />
+<h3>Total Amount: @total.ToString("C")</h3>
+
+<br />
+<form asp-controller="Order" asp-action="PlaceOrder" method="post">
+    <button type="submit">Place Order</button>
+    <a asp-controller="Cart" asp-action="Index">Back to Cart</a>
+</form>
