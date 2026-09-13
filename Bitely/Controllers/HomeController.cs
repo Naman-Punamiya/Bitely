@@ -1,6 +1,6 @@
+using System.Diagnostics;
 using Bitely.Models;
 using Microsoft.AspNetCore.Mvc;
-using System.Diagnostics;
 
 namespace Bitely.Controllers
 {
