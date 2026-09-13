@@ -1,0 +1,122 @@
+@model IEnumerable<Bitely.Models.Order>
+
+@{
+    ViewData["Title"] = "Owner Dashboard";
+    var stalls = ViewBag.MyStalls as List<Bitely.Models.FoodStall> ?? new List<Bitely.Models.FoodStall>();
+    var queueEntries = ViewBag.QueueEntries as List<Bitely.Models.QueueEntry> ?? new List<Bitely.Models.QueueEntry>();
+    var statusOptions = new[] { "Pending", "Preparing", "Ready", "Completed", "Cancelled" };
+}
+
+<h2>Food Stall Owner Dashboard</h2>
+
+<h3>My Food Stalls</h3>
+@if (!stalls.Any())
+{
+    <p>No food stalls found. <a asp-controller="FoodStall" asp-action="Create">Create a Food Stall</a></p>
+}
+else
+{
+    <ul>
+        @foreach (var stall in stalls)
+        {
+            <li>
+                <strong>@stall.Name</strong> - @stall.Location
+                | <a asp-controller="Qr" asp-action="Index" asp-route-foodStallId="@stall.Id">View QR Code</a>
+                | <a asp-controller="Menu" asp-action="Index" asp-route-foodStallId="@stall.Id">Manage Menu</a>
+                | <a asp-controller="Queue" asp-action="StallQueue" asp-route-foodStallId="@stall.Id">View Queue</a>
+            </li>
+        }
+    </ul>
+}
+
+<hr />
+
+<h3>Current Queue</h3>
+@if (!queueEntries.Any())
+{
+    <p>No active queue entries.</p>
+}
+else
+{
+    <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Queue #</th>
+                <th>Order #</th>
+                <th>Food Stall</th>
+                <th>Status</th>
+                <th>Update Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var q in queueEntries)
+            {
+                <tr>
+                    <td><strong>#@q.QueueNumber</strong></td>
+                    <td>#@q.OrderId</td>
+                    <td>@(q.FoodStall?.Name ?? q.FoodStallId.ToString())</td>
+                    <td><span id="status-@q.OrderId">@q.Status</span></td>
+                    <td>
+                        <form asp-controller="Queue" asp-action="UpdateStatus" method="post" style="display:inline-flex; gap:5px;">
+                            <input type="hidden" name="orderId" value="@q.OrderId" />
+                            <select name="status">
+                                @foreach (var s in statusOptions)
+                                {
+                                    if (s == q.Status)
+                                    {
+                                        <option value="@s" selected="selected">@s</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@s">@s</option>
+                                    }
+                                }
+                            </select>
+                            <button type="submit">Update</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<hr />
+
+<h3>Recent Orders</h3>
+@if (!Model.Any())
+{
+    <p>No orders yet.</p>
+}
+else
+{
+    <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Order #</th>
+                <th>Date</th>
+                <th>Consumer</th>
+                <th>Stall</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                <tr>
+                    <td>#@order.Id</td>
+                    <td>@order.CreatedAt.ToLocalTime().ToString("g")</td>
+                    <td>@(order.Consumer?.Name ?? order.ConsumerId.ToString())</td>
+                    <td>@(order.FoodStall?.Name ?? order.FoodStallId.ToString())</td>
+                    <td>@order.TotalAmount.ToString("C")</td>
+                    <td>@order.Status</td>
+                    <td>
+                        <a asp-controller="Order" asp-action="Details" asp-route-id="@order.Id">Details</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}

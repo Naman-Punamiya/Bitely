@@ -1,12 +1,15 @@
 using Bitely.Data;
+using Bitely.Hubs;
 using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using DotNetEnv;
+
 var builder = WebApplication.CreateBuilder(args);
 
 Env.Load();
 
 builder.Services.AddControllersWithViews();
+builder.Services.AddSignalR();
 
 var connectionString =
     $"Host={Environment.GetEnvironmentVariable("DB_HOST")};" +
@@ -32,11 +35,12 @@ app.UseStaticFiles();
 app.UseRouting();
 
 app.UseAuthentication();
-
 app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
+
+app.MapHub<QueueHub>("/queueHub");
 
 app.Run();

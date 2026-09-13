@@ -12,6 +12,7 @@
             <a asp-controller="FoodStall" asp-action="Index">Food Stalls</a> | 
             @if (User.Identity != null && User.Identity.IsAuthenticated)
             {
+                <a asp-controller="Dashboard" asp-action="Index">Dashboard</a> <span>|</span>
                 <a asp-controller="Cart" asp-action="Index">Cart</a> <span>|</span>
                 <a asp-controller="Order" asp-action="History">Orders</a> <span>|</span>
                 <span>Hello, @User.Identity.Name!</span>

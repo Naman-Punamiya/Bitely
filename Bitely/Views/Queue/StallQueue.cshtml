@@ -1,0 +1,64 @@
+@model IEnumerable<Bitely.Models.QueueEntry>
+
+@{
+    var foodStall = ViewBag.FoodStall as Bitely.Models.FoodStall;
+    ViewData["Title"] = $"Queue - {foodStall?.Name ?? "Food Stall"}";
+    var statusOptions = new[] { "Pending", "Preparing", "Ready", "Completed", "Cancelled" };
+}
+
+<h2>Queue for @(foodStall?.Name ?? "Food Stall")</h2>
+
+@if (!Model.Any())
+{
+    <p>No queue entries found for this food stall.</p>
+}
+else
+{
+    <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Queue Number</th>
+                <th>Order Number</th>
+                <th>Consumer</th>
+                <th>Current Status</th>
+                <th>Update Order Status</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var entry in Model)
+            {
+                <tr>
+                    <td><strong>#@entry.QueueNumber</strong></td>
+                    <td>#@entry.OrderId</td>
+                    <td>@(entry.Order?.Consumer?.Name ?? entry.Order?.ConsumerId.ToString())</td>
+                    <td><span id="queue-status-@entry.OrderId">@entry.Status</span></td>
+                    <td>
+                        <form asp-controller="Queue" asp-action="UpdateStatus" method="post" style="display:inline-flex; gap:5px;">
+                            <input type="hidden" name="orderId" value="@entry.OrderId" />
+                            <select name="status">
+                                @foreach (var s in statusOptions)
+                                {
+                                    if (s == entry.Status)
+                                    {
+                                        <option value="@s" selected="selected">@s</option>
+                                    }
+                                    else
+                                    {
+                                        <option value="@s">@s</option>
+                                    }
+                                }
+                            </select>
+                            <button type="submit">Update</button>
+                        </form>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+<br />
+<p>
+    <a asp-controller="Dashboard" asp-action="Index">Back to Dashboard</a> | 
+    <a asp-controller="FoodStall" asp-action="Index">Food Stalls</a>
+</p>
