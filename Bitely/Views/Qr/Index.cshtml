@@ -1,0 +1,22 @@
+@model Bitely.Models.FoodStall
+
+@{
+    ViewData["Title"] = "Food Stall QR Code";
+    var targetUrl = ViewBag.TargetUrl as string ?? $"/Menu?foodStallId={Model.Id}";
+}
+
+<h2>QR Code for @Model.Name</h2>
+
+<p>Scan this QR code to view the menu for <strong>@Model.Name</strong> directly.</p>
+
+<div style="margin: 20px 0;">
+    <img src="@Url.Action("Generate", "Qr", new { foodStallId = Model.Id })" alt="Food Stall QR Code" style="width: 250px; height: 250px; border: 1px solid #ccc; padding: 10px;" />
+</div>
+
+<p><strong>URL:</strong> <a href="@targetUrl" target="_blank">@targetUrl</a></p>
+
+<br />
+<p>
+    <a asp-controller="Menu" asp-action="Index" asp-route-foodStallId="@Model.Id">View Menu</a> | 
+    <a asp-controller="FoodStall" asp-action="Index">Back to Food Stalls</a>
+</p>

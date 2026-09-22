@@ -1,0 +1,26 @@
+@model Bitely.Models.Order
+
+@{
+    ViewData["Title"] = "Order Confirmation";
+}
+
+<h2>Order Placed Successfully!</h2>
+
+<p>Thank you! Your order <strong>#@Model.Id</strong> has been placed.</p>
+<p><strong>Food Stall:</strong> @(Model.FoodStall?.Name ?? "Food Stall")</p>
+<p><strong>Status:</strong> @Model.Status</p>
+<p><strong>Total Amount:</strong> @Model.TotalAmount.ToString("C")</p>
+
+<h3>Ordered Items:</h3>
+<ul>
+    @foreach (var item in Model.OrderItems)
+    {
+        <li>@(item.MenuItem?.Name ?? "Item") x @item.Quantity - @((item.Price * item.Quantity).ToString("C"))</li>
+    }
+</ul>
+
+<br />
+<p>
+    <a asp-controller="Payment" asp-action="Checkout" asp-route-orderId="@Model.Id"><button type="button">Proceed to Payment</button></a>
+    <a asp-controller="Order" asp-action="Details" asp-route-id="@Model.Id">View Order Details</a>
+</p>

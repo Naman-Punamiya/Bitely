@@ -1,0 +1,98 @@
+@model IEnumerable<Bitely.Models.Order>
+
+@{
+    ViewData["Title"] = "Consumer Dashboard";
+    var activeOrder = ViewBag.ActiveOrder as Bitely.Models.Order;
+    var activeQueue = ViewBag.ActiveQueue as Bitely.Models.QueueEntry;
+}
+
+<h2>Consumer Dashboard</h2>
+
+@if (activeOrder != null)
+{
+    <div style="border: 2px solid #333; padding: 15px; margin-bottom: 20px; background-color: #f9f9f9;">
+        <h3>Active Order #@activeOrder.Id</h3>
+        <p><strong>Food Stall:</strong> @(activeOrder.FoodStall?.Name ?? "Food Stall")</p>
+        <p><strong>Queue Number:</strong> <span style="font-size: 1.4em; color: green;">#@(activeQueue?.QueueNumber ?? 0)</span></p>
+        <p>
+            <strong>Order Status:</strong> 
+            <span id="live-order-status" style="font-weight: bold; font-size: 1.2em; color: #d9534f;">
+                @activeOrder.Status
+            </span>
+        </p>
+        <p><em>(Status updates in real-time without refreshing via SignalR)</em></p>
+        <p>
+            <a asp-controller="Order" asp-action="Details" asp-route-id="@activeOrder.Id">View Order Details</a> | 
+            <a asp-controller="Queue" asp-action="Status" asp-route-orderId="@activeOrder.Id">Queue Status Page</a>
+        </p>
+    </div>
+}
+else
+{
+    <p>No active order right now. <a asp-controller="FoodStall" asp-action="Index">Browse Food Stalls</a> to place an order!</p>
+}
+
+<hr />
+
+<h3>Order History</h3>
+@if (!Model.Any())
+{
+    <p>No past orders.</p>
+}
+else
+{
+    <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+            <tr>
+                <th>Order #</th>
+                <th>Date</th>
+                <th>Food Stall</th>
+                <th>Total</th>
+                <th>Status</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            @foreach (var order in Model)
+            {
+                <tr>
+                    <td>#@order.Id</td>
+                    <td>@order.CreatedAt.ToLocalTime().ToString("g")</td>
+                    <td>@(order.FoodStall?.Name ?? order.FoodStallId.ToString())</td>
+                    <td>@order.TotalAmount.ToString("C")</td>
+                    <td>@order.Status</td>
+                    <td>
+                        <a asp-controller="Order" asp-action="Details" asp-route-id="@order.Id">Details</a>
+                    </td>
+                </tr>
+            }
+        </tbody>
+    </table>
+}
+
+@if (activeOrder != null)
+{
+    <!-- SignalR Script for Live Status Updates -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+    <script>
+        const activeOrderId = "@activeOrder.Id";
+        const connection = new signalR.HubConnectionBuilder()
+            .withUrl("/queueHub")
+            .build();
+
+        connection.on("ReceiveStatusUpdate", function (orderId, newStatus) {
+            if (orderId === activeOrderId) {
+                const statusElem = document.getElementById("live-order-status");
+                if (statusElem) {
+                    statusElem.innerText = newStatus;
+                }
+            }
+        });
+
+        connection.start().then(function () {
+            connection.invoke("JoinOrderGroup", activeOrderId);
+        }).catch(function (err) {
+            console.error("SignalR Connection Error: ", err);
+        });
+    </script>
+}

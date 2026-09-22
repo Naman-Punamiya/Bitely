@@ -1,0 +1,37 @@
+@model Bitely.Models.FoodStall
+
+@{
+    ViewData["Title"] = "Edit Food Stall";
+}
+
+<h2>Edit Food Stall</h2>
+
+<form asp-action="Edit" method="post">
+    <input type="hidden" asp-for="Id" />
+    <div>
+        <label asp-for="Name"></label><br />
+        <input asp-for="Name" required />
+        <span asp-validation-for="Name"></span>
+    </div>
+    <br />
+    <div>
+        <label asp-for="Description"></label><br />
+        <textarea asp-for="Description"></textarea>
+        <span asp-validation-for="Description"></span>
+    </div>
+    <br />
+    <div>
+        <label asp-for="Location"></label><br />
+        <input asp-for="Location" required />
+        <span asp-validation-for="Location"></span>
+    </div>
+    <br />
+    <div>
+        <label>
+            <input asp-for="IsOpen" type="checkbox" /> Is Open
+        </label>
+    </div>
+    <br />
+    <button type="submit">Save</button>
+    <a asp-action="Index">Cancel</a>
+</form>

@@ -1,0 +1,33 @@
+@model Bitely.Models.Order
+
+@{
+    ViewData["Title"] = "Payment Checkout";
+}
+
+<h2>Payment for Order #@Model.Id</h2>
+
+<p><strong>Food Stall:</strong> @(Model.FoodStall?.Name ?? "Food Stall")</p>
+<p><strong>Total Amount to Pay:</strong> @Model.TotalAmount.ToString("C")</p>
+
+<h3>Select Payment Method</h3>
+
+<form asp-controller="Payment" asp-action="ProcessPayment" method="post">
+    <input type="hidden" name="orderId" value="@Model.Id" />
+
+    <div>
+        <label>
+            <input type="radio" name="method" value="Online" checked />
+            Online Payment (Placeholder - Razorpay integration upcoming)
+        </label>
+    </div>
+    <br />
+    <div>
+        <label>
+            <input type="radio" name="method" value="Offline" />
+            Offline Payment (Pay at Stall Counter)
+        </label>
+    </div>
+    <br />
+    <button type="submit">Complete Payment</button>
+    <a asp-controller="Order" asp-action="Details" asp-route-id="@Model.Id">Cancel</a>
+</form>

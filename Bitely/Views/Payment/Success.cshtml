@@ -1,0 +1,38 @@
+@model Bitely.Models.Payment
+
+@{
+    ViewData["Title"] = "Payment Success";
+}
+
+<h2>Payment Successful!</h2>
+
+<p>Your payment has been successfully recorded.</p>
+
+<table border="1" cellpadding="8" cellspacing="0">
+    <tr>
+        <th>Payment ID</th>
+        <td>#@Model.Id</td>
+    </tr>
+    <tr>
+        <th>Order ID</th>
+        <td>#@Model.OrderId</td>
+    </tr>
+    <tr>
+        <th>Amount Paid</th>
+        <td>@Model.Amount.ToString("C")</td>
+    </tr>
+    <tr>
+        <th>Payment Method</th>
+        <td>@Model.Method</td>
+    </tr>
+    <tr>
+        <th>Payment Status</th>
+        <td>@Model.Status</td>
+    </tr>
+</table>
+
+<br />
+<p>
+    <a asp-controller="Order" asp-action="Details" asp-route-id="@Model.OrderId">View Order Details</a> | 
+    <a asp-controller="Order" asp-action="History">View Order History</a>
+</p>
