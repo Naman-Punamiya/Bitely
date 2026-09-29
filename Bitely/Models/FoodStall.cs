@@ -8,10 +8,11 @@ namespace Bitely.Models
         public string Name { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string Location { get; set; } = string.Empty;
-        public int OwnerId { get; set; }
         public bool IsOpen { get; set; }
 
-        public User? Owner { get; set; }
+        public string OwnerId { get; set; } = string.Empty;
+
+        public ApplicationUser? Owner { get; set; }
         public ICollection<MenuItem> MenuItems { get; set; } = new List<MenuItem>();
     }
 }

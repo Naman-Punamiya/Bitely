@@ -3,46 +3,90 @@
     ViewData["Title"] = "Register";
 }
 
-<h2>Register</h2>
+<div class="auth-wrapper">
+    <div class="auth-card">
+        <div class="app-card shadow-sm">
+            <div class="app-card-header text-center py-4">
+                <div class="text-primary fs-1 mb-2">
+                    <i class="bi bi-person-plus"></i>
+                </div>
+                <h3 class="fw-bold mb-1">Create an Account</h3>
+                <p class="text-muted small mb-0">Join Bitely as a Consumer or Stall Owner</p>
+            </div>
+            
+            <div class="app-card-body p-4">
+                <div asp-validation-summary="All" class="alert alert-danger py-2 small mb-4" style="display: @(ViewData.ModelState.IsValid ? "none" : "block");"></div>
 
-<div asp-validation-summary="All"></div>
+                <form asp-action="Register" asp-route-returnUrl="@ViewData["ReturnUrl"]" method="post">
+                    <div class="mb-3">
+                        <label asp-for="Name" class="form-label">Full Name</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-person"></i></span>
+                            <input asp-for="Name" class="form-control" placeholder="John Doe" />
+                        </div>
+                        <span asp-validation-for="Name" class="text-danger small"></span>
+                    </div>
 
-<form asp-action="Register" method="post">
-    <div>
-        <label asp-for="Name">Name:</label><br />
-        <input asp-for="Name" />
-        <span asp-validation-for="Name"></span>
-    </div>
-    <br />
-    <div>
-        <label asp-for="Email">Email:</label><br />
-        <input asp-for="Email" />
-        <span asp-validation-for="Email"></span>
-    </div>
-    <br />
-    <div>
-        <label asp-for="Password">Password:</label><br />
-        <input asp-for="Password" />
-        <span asp-validation-for="Password"></span>
-    </div>
-    <br />
-    <div>
-        <label asp-for="ConfirmPassword">Confirm Password:</label><br />
-        <input asp-for="ConfirmPassword" />
-        <span asp-validation-for="ConfirmPassword"></span>
-    </div>
-    <br />
-    <div>
-        <label asp-for="Role">Role:</label><br />
-        <select asp-for="Role">
-            <option value="">-- Select Role --</option>
-            <option value="Consumer">Consumer</option>
-            <option value="FoodStallOwner">Food Stall Owner</option>
-        </select>
-        <span asp-validation-for="Role"></span>
-    </div>
-    <br />
-    <button type="submit">Register</button>
-</form>
+                    <div class="mb-3">
+                        <label asp-for="Email" class="form-label">Email Address</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-envelope"></i></span>
+                            <input asp-for="Email" class="form-control" placeholder="name@example.com" />
+                        </div>
+                        <span asp-validation-for="Email" class="text-danger small"></span>
+                    </div>
 
-<p><a asp-action="Login">Already have an account? Login</a></p>
+                    <div class="mb-3">
+                        <label asp-for="Role" class="form-label">Account Role</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-shield-lock"></i></span>
+                            <select asp-for="Role" class="form-select">
+                                <option value="">-- Select Your Role --</option>
+                                <option value="Consumer">Consumer (Order food & explore stalls)</option>
+                                <option value="FoodStallOwner">Food Stall Owner (Manage stalls & menus)</option>
+                            </select>
+                        </div>
+                        <span asp-validation-for="Role" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-3">
+                        <label asp-for="Password" class="form-label">Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-lock"></i></span>
+                            <input asp-for="Password" class="form-control" placeholder="Create a password" />
+                        </div>
+                        <span asp-validation-for="Password" class="text-danger small"></span>
+                    </div>
+
+                    <div class="mb-4">
+                        <label asp-for="ConfirmPassword" class="form-label">Confirm Password</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light text-muted"><i class="bi bi-check2-circle"></i></span>
+                            <input asp-for="ConfirmPassword" class="form-control" placeholder="Re-enter your password" />
+                        </div>
+                        <span asp-validation-for="ConfirmPassword" class="text-danger small"></span>
+                    </div>
+
+                    <div class="d-grid mb-3">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="bi bi-person-check me-1"></i> Create Account
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <div class="app-card-footer text-center py-3">
+                <p class="text-muted small mb-0">
+                    Already have an account? 
+                    <a asp-action="Login" asp-route-returnUrl="@ViewData["ReturnUrl"]" class="text-primary fw-semibold text-decoration-none">
+                        Sign In here
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <partial name="_ValidationScriptsPartial" />
+}

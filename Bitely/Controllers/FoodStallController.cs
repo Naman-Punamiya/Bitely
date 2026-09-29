@@ -18,13 +18,11 @@ namespace Bitely.Controllers
             _context = context;
         }
 
-        private int GetCurrentUserId()
+        private string? GetCurrentUserId()
         {
-            var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            return int.TryParse(claim, out var id) ? id : 0;
+            return User.FindFirstValue(ClaimTypes.NameIdentifier);
         }
 
-        // GET: FoodStall
         public async Task<IActionResult> Index()
         {
             var stalls = await _context.FoodStalls
@@ -33,7 +31,6 @@ namespace Bitely.Controllers
             return View(stalls);
         }
 
-        // GET: FoodStall/Details/5
         public async Task<IActionResult> Details(int id)
         {
             var stall = await _context.FoodStalls
@@ -49,14 +46,12 @@ namespace Bitely.Controllers
             return View(stall);
         }
 
-        // GET: FoodStall/Create
         [Authorize(Roles = Roles.FoodStallOwner)]
         public IActionResult Create()
         {
             return View();
         }
 
-        // POST: FoodStall/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = Roles.FoodStallOwner)]
@@ -64,7 +59,7 @@ namespace Bitely.Controllers
         {
             if (ModelState.IsValid)
             {
-                foodStall.OwnerId = GetCurrentUserId();
+                foodStall.OwnerId = GetCurrentUserId() ?? string.Empty;
                 _context.FoodStalls.Add(foodStall);
                 await _context.SaveChangesAsync();
                 return RedirectToAction(nameof(Index));
@@ -72,7 +67,6 @@ namespace Bitely.Controllers
             return View(foodStall);
         }
 
-        // GET: FoodStall/Edit/5
         [Authorize(Roles = Roles.FoodStallOwner)]
         public async Task<IActionResult> Edit(int id)
         {
@@ -90,7 +84,6 @@ namespace Bitely.Controllers
             return View(stall);
         }
 
-        // POST: FoodStall/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = Roles.FoodStallOwner)]
@@ -125,7 +118,6 @@ namespace Bitely.Controllers
             return View(foodStall);
         }
 
-        // GET: FoodStall/Delete/5
         [Authorize(Roles = Roles.FoodStallOwner)]
         public async Task<IActionResult> Delete(int id)
         {
@@ -146,7 +138,6 @@ namespace Bitely.Controllers
             return View(stall);
         }
 
-        // POST: FoodStall/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = Roles.FoodStallOwner)]

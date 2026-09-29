@@ -1,6 +1,20 @@
-﻿@{
+@{
     ViewData["Title"] = "Privacy Policy";
 }
-<h1>@ViewData["Title"]</h1>
 
-<p>Use this page to detail your site's privacy policy.</p>
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="app-card shadow-sm p-4">
+            <h2 class="fw-bold mb-3"><i class="bi bi-shield-check text-primary me-2"></i>Privacy Policy</h2>
+            <p class="text-muted">
+                Bitely respects your privacy and is dedicated to protecting your account information in accordance with educational project guidelines.
+            </p>
+            <p class="text-muted">
+                User passwords are encrypted securely using ASP.NET Core Identity's PBKDF2 algorithm, and session cookies are strictly HTTP-only.
+            </p>
+            <a asp-action="Index" class="btn btn-outline-primary mt-2">
+                <i class="bi bi-arrow-left me-1"></i> Back to Home
+            </a>
+        </div>
+    </div>
+</div>

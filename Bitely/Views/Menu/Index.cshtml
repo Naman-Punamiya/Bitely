@@ -2,58 +2,110 @@
 @using System.Security.Claims
 
 @{
-    ViewData["Title"] = "Menu Items";
     var foodStall = ViewBag.FoodStall as Bitely.Models.FoodStall;
+    ViewData["Title"] = $"Menu - {foodStall?.Name ?? "Food Stall"}";
     var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    var isMyStall = foodStall != null && currentUserId != null && foodStall.OwnerId.ToString() == currentUserId;
+    var isMyStall = foodStall != null && currentUserId != null && foodStall.OwnerId == currentUserId;
     var isOwnerRole = User.IsInRole(Bitely.Models.Roles.FoodStallOwner);
 }
 
-<h2>Menu for @(foodStall?.Name ?? "Food Stall")</h2>
+<div class="mb-4">
+    <a asp-controller="FoodStall" asp-action="Index" class="btn btn-sm btn-outline-secondary mb-3">
+        <i class="bi bi-arrow-left me-1"></i> Back to Food Stalls
+    </a>
 
-@if (isOwnerRole && isMyStall && foodStall != null)
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+        <div>
+            <h2 class="fw-bold mb-1">
+                <i class="bi bi-book text-primary me-2"></i>Menu for @(foodStall?.Name ?? "Food Stall")
+            </h2>
+            <p class="text-muted mb-0">
+                <i class="bi bi-geo-alt me-1"></i> @(foodStall?.Location ?? "Food Court") &nbsp;|&nbsp;
+                @if (foodStall != null && foodStall.IsOpen)
+                {
+                    <span class="text-success fw-semibold"><i class="bi bi-circle-fill fs-6 me-1"></i> Open</span>
+                }
+                else
+                {
+                    <span class="text-danger fw-semibold"><i class="bi bi-circle-fill fs-6 me-1"></i> Closed</span>
+                }
+            </p>
+        </div>
+
+        @if (isOwnerRole && isMyStall && foodStall != null)
+        {
+            <a asp-action="Create" asp-route-foodStallId="@foodStall.Id" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> Add Menu Item
+            </a>
+        }
+    </div>
+</div>
+
+@if (!Model.Any())
 {
-    <p>
-        <a asp-action="Create" asp-route-foodStallId="@foodStall.Id">Add New Menu Item</a>
-    </p>
+    <div class="empty-state">
+        <div class="empty-state-icon">
+            <i class="bi bi-card-list"></i>
+        </div>
+        <div class="empty-state-title">No Menu Items Listed</div>
+        <div class="empty-state-text">
+            There are currently no dishes or drinks available on this menu.
+        </div>
+        @if (isOwnerRole && isMyStall && foodStall != null)
+        {
+            <a asp-action="Create" asp-route-foodStallId="@foodStall.Id" class="btn btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> Add First Item
+            </a>
+        }
+    </div>
 }
-
-<table border="1" cellpadding="8" cellspacing="0">
-    <thead>
-        <tr>
-            <th>Name</th>
-            <th>Description</th>
-            <th>Category</th>
-            <th>Price</th>
-            <th>Available</th>
-            @if (isOwnerRole && isMyStall)
-            {
-                <th>Actions</th>
-            }
-        </tr>
-    </thead>
-    <tbody>
+else
+{
+    <div class="row g-4">
         @foreach (var item in Model)
         {
-            <tr>
-                <td>@item.Name</td>
-                <td>@item.Description</td>
-                <td>@item.Category</td>
-                <td>@item.Price</td>
-                <td>@(item.IsAvailable ? "Yes" : "No")</td>
-                @if (isOwnerRole && isMyStall)
-                {
-                    <td>
-                        <a asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                        <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-                    </td>
-                }
-            </tr>
-        }
-    </tbody>
-</table>
+            <div class="col-md-6 col-lg-4">
+                <div class="app-card app-card-hover h-100 d-flex flex-column">
+                    <div class="app-card-body flex-grow-1">
+                        <div class="d-flex justify-content-between align-items-start mb-2">
+                            <h5 class="fw-bold text-dark mb-0">@item.Name</h5>
+                            <span class="fw-bold fs-5 text-primary">$@item.Price.ToString("F2")</span>
+                        </div>
 
-<br />
-<p>
-    <a asp-controller="FoodStall" asp-action="Index">Back to Food Stalls</a>
-</p>
+                        <div class="mb-3">
+                            <span class="badge-category me-2">@item.Category</span>
+                            @if (item.IsAvailable)
+                            {
+                                <span class="badge-open small">
+                                    <i class="bi bi-check-circle me-1"></i> Available
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge-closed small">
+                                    <i class="bi bi-x-circle me-1"></i> Unavailable
+                                </span>
+                            }
+                        </div>
+
+                        <p class="text-secondary small mb-0">
+                            @(string.IsNullOrWhiteSpace(item.Description) ? "No description provided." : item.Description)
+                        </p>
+                    </div>
+
+                    @if (isOwnerRole && isMyStall)
+                    {
+                        <div class="app-card-footer d-flex justify-content-end gap-2">
+                            <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-pencil me-1"></i> Edit
+                            </a>
+                            <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">
+                                <i class="bi bi-trash me-1"></i> Delete
+                            </a>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+}

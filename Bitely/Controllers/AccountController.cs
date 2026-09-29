@@ -1,81 +1,128 @@
-using System.Security.Claims;
-using Bitely.Data;
 using Bitely.Models;
 using Bitely.ViewModels;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Cookies;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 
 namespace Bitely.Controllers
 {
     public class AccountController : Controller
     {
-        private readonly ApplicationDbContext _context;
+        private readonly UserManager<ApplicationUser> _userManager;
+        private readonly SignInManager<ApplicationUser> _signInManager;
+        private readonly RoleManager<IdentityRole> _roleManager;
 
-        public AccountController(ApplicationDbContext context)
+        public AccountController(
+            UserManager<ApplicationUser> userManager,
+            SignInManager<ApplicationUser> signInManager,
+            RoleManager<IdentityRole> roleManager)
         {
-            _context = context;
+            _userManager = userManager;
+            _signInManager = signInManager;
+            _roleManager = roleManager;
         }
 
         [HttpGet]
-        public IActionResult Register()
+        public IActionResult Register(string? returnUrl = null)
         {
+            ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Register(RegisterViewModel model)
+        public async Task<IActionResult> Register(RegisterViewModel model, string? returnUrl = null)
         {
+            ViewData["ReturnUrl"] = returnUrl;
+
             if (ModelState.IsValid)
             {
-                if (_context.Users.Any(u => u.Email == model.Email))
-                {
-                    ModelState.AddModelError("Email", "Email is already registered.");
-                    return View(model);
-                }
-
                 if (model.Role != Roles.Consumer && model.Role != Roles.FoodStallOwner)
                 {
-                    ModelState.AddModelError("Role", "Invalid role selected.");
+                    ModelState.AddModelError(nameof(model.Role), "Invalid role selected. Please choose Consumer or Food Stall Owner.");
                     return View(model);
                 }
 
-                var user = new User
+                var existingUser = await _userManager.FindByEmailAsync(model.Email);
+                if (existingUser != null)
                 {
-                    Name = model.Name,
+                    ModelState.AddModelError(nameof(model.Email), "An account with this email already exists.");
+                    return View(model);
+                }
+
+                var user = new ApplicationUser
+                {
+                    UserName = model.Email,
                     Email = model.Email,
-                    Password = model.Password,
-                    Role = model.Role
+                    Name = model.Name
                 };
 
-                _context.Users.Add(user);
-                await _context.SaveChangesAsync();
-                await SignInUserAsync(user);
-                return RedirectToAction("Index", "Home");
+                var result = await _userManager.CreateAsync(user, model.Password);
+                if (result.Succeeded)
+                {
+                    if (!await _roleManager.RoleExistsAsync(model.Role))
+                    {
+                        await _roleManager.CreateAsync(new IdentityRole(model.Role));
+                    }
+
+                    await _userManager.AddToRoleAsync(user, model.Role);
+                    await _signInManager.SignInAsync(user, isPersistent: false);
+
+                    if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                    {
+                        return Redirect(returnUrl);
+                    }
+
+                    return RedirectToAction("Index", "Home");
+                }
+
+                foreach (var error in result.Errors)
+                {
+                    ModelState.AddModelError(string.Empty, error.Description);
+                }
             }
 
             return View(model);
         }
 
         [HttpGet]
-        public IActionResult Login()
+        public IActionResult Login(string? returnUrl = null)
         {
+            ViewData["ReturnUrl"] = returnUrl;
             return View();
         }
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Login(LoginViewModel model)
+        public async Task<IActionResult> Login(LoginViewModel model, string? returnUrl = null)
         {
+            ViewData["ReturnUrl"] = returnUrl;
+
             if (ModelState.IsValid)
             {
-                var user = _context.Users.FirstOrDefault(u => u.Email == model.Email && u.Password == model.Password);
-
+                var user = await _userManager.FindByEmailAsync(model.Email);
                 if (user != null)
                 {
-                    await SignInUserAsync(user);
-                    return RedirectToAction("Index", "Home");
+                    var result = await _signInManager.PasswordSignInAsync(
+                        user.UserName!,
+                        model.Password,
+                        isPersistent: false,
+                        lockoutOnFailure: false);
+
+                    if (result.Succeeded)
+                    {
+                        if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                        {
+                            return Redirect(returnUrl);
+                        }
+
+                        return RedirectToAction("Index", "Home");
+                    }
+
+                    if (result.IsLockedOut)
+                    {
+                        ModelState.AddModelError(string.Empty, "This account has been locked out due to multiple failed login attempts.");
+                        return View(model);
+                    }
                 }
 
                 ModelState.AddModelError(string.Empty, "Invalid email or password.");
@@ -88,30 +135,14 @@ namespace Bitely.Controllers
         [ValidateAntiForgeryToken]
         public async Task<IActionResult> Logout()
         {
-            await HttpContext.SignOutAsync(CookieAuthenticationDefaults.AuthenticationScheme);
+            await _signInManager.SignOutAsync();
             return RedirectToAction("Index", "Home");
         }
 
-        private async Task SignInUserAsync(User user)
+        [HttpGet]
+        public IActionResult AccessDenied()
         {
-            var claims = new List<Claim>
-            {
-                new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-                new Claim(ClaimTypes.Name, user.Name),
-                new Claim(ClaimTypes.Email, user.Email),
-                new Claim(ClaimTypes.Role, user.Role)
-            };
-
-            var claimsIdentity = new ClaimsIdentity(claims, CookieAuthenticationDefaults.AuthenticationScheme);
-            var authProperties = new AuthenticationProperties
-            {
-                IsPersistent = true
-            };
-
-            await HttpContext.SignInAsync(
-                CookieAuthenticationDefaults.AuthenticationScheme,
-                new ClaimsPrincipal(claimsIdentity),
-                authProperties);
+            return View();
         }
     }
 }

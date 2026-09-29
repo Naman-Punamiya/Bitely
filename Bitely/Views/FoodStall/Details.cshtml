@@ -2,74 +2,150 @@
 @using System.Security.Claims
 
 @{
-    ViewData["Title"] = "Food Stall Details";
+    ViewData["Title"] = $"{Model.Name} - Details";
     var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    var isMyStall = currentUserId != null && Model.OwnerId.ToString() == currentUserId;
+    var isMyStall = currentUserId != null && Model.OwnerId == currentUserId;
     var isOwnerRole = User.IsInRole(Bitely.Models.Roles.FoodStallOwner);
 }
 
-<h2>@Model.Name</h2>
+<div class="mb-4">
+    <a asp-action="Index" class="btn btn-sm btn-outline-secondary mb-3">
+        <i class="bi bi-arrow-left me-1"></i> Back to Food Stalls
+    </a>
 
-<div>
-    <p><strong>Description:</strong> @Model.Description</p>
-    <p><strong>Location:</strong> @Model.Location</p>
-    <p><strong>Status:</strong> @(Model.IsOpen ? "Open" : "Closed")</p>
-    <p><strong>Owner:</strong> @(Model.Owner?.Name ?? Model.OwnerId.ToString())</p>
+    <div class="app-card shadow-sm mb-4">
+        <div class="app-card-body p-4">
+            <div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-3">
+                <div>
+                    <h2 class="fw-bold mb-1">@Model.Name</h2>
+                    <p class="text-muted mb-0">
+                        <i class="bi bi-geo-alt text-primary me-1"></i> @Model.Location &nbsp;|&nbsp; 
+                        <i class="bi bi-person text-secondary me-1"></i> Owner: <strong>@(Model.Owner?.Name ?? Model.Owner?.UserName ?? "Vendor")</strong>
+                    </p>
+                </div>
+                <div>
+                    @if (Model.IsOpen)
+                    {
+                        <span class="badge-open fs-6">
+                            <i class="bi bi-check-circle-fill me-1"></i> Open for Orders
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge-closed fs-6">
+                            <i class="bi bi-x-circle-fill me-1"></i> Currently Closed
+                        </span>
+                    }
+                </div>
+            </div>
+
+            <p class="lead text-secondary mb-0">
+                @(string.IsNullOrWhiteSpace(Model.Description) ? "No description provided." : Model.Description)
+            </p>
+        </div>
+
+        @if (isOwnerRole && isMyStall)
+        {
+            <div class="app-card-footer d-flex justify-content-end gap-2">
+                <a asp-action="Edit" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-primary">
+                    <i class="bi bi-pencil me-1"></i> Edit Stall
+                </a>
+                <a asp-action="Delete" asp-route-id="@Model.Id" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash me-1"></i> Delete Stall
+                </a>
+            </div>
+        }
+    </div>
 </div>
 
-<h3>Menu Items</h3>
-
-@if (isOwnerRole && isMyStall)
-{
-    <p>
-        <a asp-controller="Menu" asp-action="Create" asp-route-foodStallId="@Model.Id">Add New Menu Item</a>
-    </p>
-}
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
+    <div>
+        <h4 class="fw-bold mb-0">Menu Items</h4>
+        <p class="text-muted small mb-0">Available dishes and beverages</p>
+    </div>
+    @if (isOwnerRole && isMyStall)
+    {
+        <a asp-controller="Menu" asp-action="Create" asp-route-foodStallId="@Model.Id" class="btn btn-primary btn-sm">
+            <i class="bi bi-plus-lg me-1"></i> Add Menu Item
+        </a>
+    }
+</div>
 
 @if (Model.MenuItems != null && Model.MenuItems.Any())
 {
-    <table border="1" cellpadding="8" cellspacing="0">
-        <thead>
-            <tr>
-                <th>Name</th>
-                <th>Category</th>
-                <th>Price</th>
-                <th>Status</th>
-                <th>Description</th>
-                @if (isOwnerRole && isMyStall)
-                {
-                    <th>Actions</th>
-                }
-            </tr>
-        </thead>
-        <tbody>
-            @foreach (var item in Model.MenuItems)
-            {
+    <div class="table-responsive app-table shadow-sm">
+        <table class="table table-hover mb-0">
+            <thead>
                 <tr>
-                    <td>@item.Name</td>
-                    <td>@item.Category</td>
-                    <td>$@item.Price</td>
-                    <td>@(item.IsAvailable ? "Available" : "Unavailable")</td>
-                    <td>@item.Description</td>
+                    <th>Item Name</th>
+                    <th>Category</th>
+                    <th>Price</th>
+                    <th>Availability</th>
+                    <th>Description</th>
                     @if (isOwnerRole && isMyStall)
                     {
-                        <td>
-                            <a asp-controller="Menu" asp-action="Edit" asp-route-id="@item.Id">Edit</a> |
-                            <a asp-controller="Menu" asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-                        </td>
+                        <th class="text-end">Actions</th>
                     }
                 </tr>
-            }
-        </tbody>
-    </table>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.MenuItems)
+                {
+                    <tr>
+                        <td class="fw-semibold text-dark">@item.Name</td>
+                        <td>
+                            <span class="badge-category">@item.Category</span>
+                        </td>
+                        <td class="fw-bold text-primary">$@item.Price.ToString("F2")</td>
+                        <td>
+                            @if (item.IsAvailable)
+                            {
+                                <span class="badge-open small">
+                                    <i class="bi bi-check me-1"></i> Available
+                                </span>
+                            }
+                            else
+                            {
+                                <span class="badge-closed small">
+                                    <i class="bi bi-x me-1"></i> Out of Stock
+                                </span>
+                            }
+                        </td>
+                        <td class="text-muted small">@item.Description</td>
+                        @if (isOwnerRole && isMyStall)
+                        {
+                            <td class="text-end">
+                                <div class="btn-group">
+                                    <a asp-controller="Menu" asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" title="Edit Item">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                    <a asp-controller="Menu" asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" title="Delete Item">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                </div>
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
 }
 else
 {
-    <p>No menu items available for this stall.</p>
+    <div class="empty-state py-4">
+        <div class="empty-state-icon fs-1">
+            <i class="bi bi-card-list"></i>
+        </div>
+        <div class="empty-state-title">No Menu Items Yet</div>
+        <div class="empty-state-text small">
+            This food stall hasn't listed any menu items yet.
+        </div>
+        @if (isOwnerRole && isMyStall)
+        {
+            <a asp-controller="Menu" asp-action="Create" asp-route-foodStallId="@Model.Id" class="btn btn-sm btn-primary">
+                <i class="bi bi-plus-lg me-1"></i> Add First Item
+            </a>
+        }
+    </div>
 }
-
-<br />
-<p>
-    <a asp-controller="Menu" asp-action="Index" asp-route-foodStallId="@Model.Id">View Full Menu Page</a> |
-    <a asp-action="Index">Back to Stalls</a>
-</p>

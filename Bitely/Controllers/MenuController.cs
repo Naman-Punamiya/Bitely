@@ -18,13 +18,11 @@ namespace Bitely.Controllers
             _context = context;
         }
 
-        private int GetCurrentUserId()
+        private string? GetCurrentUserId()
         {
-            var claim = User.FindFirstValue(ClaimTypes.NameIdentifier);
-            return int.TryParse(claim, out var id) ? id : 0;
+            return User.FindFirstValue(ClaimTypes.NameIdentifier);
         }
 
-        // GET: Menu?foodStallId=1
         public async Task<IActionResult> Index(int foodStallId)
         {
             var foodStall = await _context.FoodStalls
@@ -43,7 +41,6 @@ namespace Bitely.Controllers
             return View(menuItems);
         }
 
-        // GET: Menu/Create?foodStallId=1
         [Authorize(Roles = Roles.FoodStallOwner)]
         public async Task<IActionResult> Create(int foodStallId)
         {
@@ -63,7 +60,6 @@ namespace Bitely.Controllers
             return View(item);
         }
 
-        // POST: Menu/Create
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = Roles.FoodStallOwner)]
@@ -91,7 +87,6 @@ namespace Bitely.Controllers
             return View(menuItem);
         }
 
-        // GET: Menu/Edit/5
         [Authorize(Roles = Roles.FoodStallOwner)]
         public async Task<IActionResult> Edit(int id)
         {
@@ -112,7 +107,6 @@ namespace Bitely.Controllers
             return View(menuItem);
         }
 
-        // POST: Menu/Edit/5
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = Roles.FoodStallOwner)]
@@ -152,7 +146,6 @@ namespace Bitely.Controllers
             return View(menuItem);
         }
 
-        // GET: Menu/Delete/5
         [Authorize(Roles = Roles.FoodStallOwner)]
         public async Task<IActionResult> Delete(int id)
         {
@@ -173,7 +166,6 @@ namespace Bitely.Controllers
             return View(menuItem);
         }
 
-        // POST: Menu/Delete/5
         [HttpPost, ActionName("Delete")]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = Roles.FoodStallOwner)]
