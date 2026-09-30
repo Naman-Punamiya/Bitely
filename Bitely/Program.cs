@@ -4,13 +4,15 @@ using DotNetEnv;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-var builder = WebApplication.CreateBuilder(args);
-
+// Load environment variables from .env file first
 Env.Load();
+
+var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 
-var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION")
+    ?? builder.Configuration.GetConnectionString("DefaultConnection");
 
 if (string.IsNullOrWhiteSpace(connectionString) || connectionString.Contains("${"))
 {
@@ -19,9 +21,16 @@ if (string.IsNullOrWhiteSpace(connectionString) || connectionString.Contains("${
     var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "bitely_db";
     var dbUser = Environment.GetEnvironmentVariable("DB_USER") ?? "postgres";
     var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "postgres";
+    var dbSslMode = Environment.GetEnvironmentVariable("DB_SSLMODE");
 
-    connectionString = $"Host={dbHost};Port={dbPort};Database={dbName};Username={dbUser};Password={dbPassword};";
+    var sslSuffix = !string.IsNullOrWhiteSpace(dbSslMode)
+        ? $";SSL Mode={dbSslMode};Trust Server Certificate=true"
+        : (dbHost != "localhost" && dbHost != "127.0.0.1" ? ";SSL Mode=Require;Trust Server Certificate=true" : "");
+
+    connectionString = $"Host={dbHost};Port={dbPort};Database={dbName};Username={dbUser};Password={dbPassword}{sslSuffix};";
 }
+
+Console.WriteLine($"[Database] Configured connection string: {connectionString}");
 
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseNpgsql(connectionString));
