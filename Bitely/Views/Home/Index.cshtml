@@ -35,8 +35,20 @@
             <div>
                 @if (isOwner)
                 {
-                    <a asp-controller="FoodStall" asp-action="Create" class="btn btn-outline-primary me-2">
-                        <i class="bi bi-plus-circle me-1"></i> Create New Stall
+                    <a asp-controller="Order" asp-action="StallOrders" class="btn btn-outline-primary me-2">
+                        <i class="bi bi-receipt me-1"></i> Incoming Orders
+                    </a>
+                    <a asp-controller="FoodStall" asp-action="Create" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-plus-circle me-1"></i> Create Stall
+                    </a>
+                }
+                else
+                {
+                    <a asp-controller="Cart" asp-action="Index" class="btn btn-outline-primary me-2">
+                        <i class="bi bi-cart3 me-1"></i> View Cart
+                    </a>
+                    <a asp-controller="Order" asp-action="Index" class="btn btn-outline-secondary me-2">
+                        <i class="bi bi-bag-check me-1"></i> My Orders
                     </a>
                 }
                 <a asp-controller="FoodStall" asp-action="Index" class="btn btn-primary">

@@ -1,0 +1,98 @@
+@model IEnumerable<Bitely.Models.Notification>
+
+@{
+    ViewData["Title"] = "Notifications";
+    var unreadCount = Model.Count(n => !n.IsRead);
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
+            <div>
+                <h2 class="fw-bold mb-1"><i class="bi bi-bell text-primary me-2"></i>Notifications</h2>
+                <p class="text-muted mb-0">Stay updated on orders, status updates, and stall activity</p>
+            </div>
+
+            @if (unreadCount > 0)
+            {
+                <form asp-action="MarkAllAsRead" method="post">
+                    <button type="submit" class="btn btn-sm btn-outline-primary">
+                        <i class="bi bi-check2-all me-1"></i> Mark All as Read
+                    </button>
+                </form>
+            }
+        </div>
+
+        @if (!Model.Any())
+        {
+            <div class="empty-state">
+                <div class="empty-state-icon text-muted">
+                    <i class="bi bi-bell-slash"></i>
+                </div>
+                <div class="empty-state-title">No Notifications</div>
+                <div class="empty-state-text">
+                    You're all caught up! When orders or status changes occur, you will be notified here.
+                </div>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                    <i class="bi bi-house me-1"></i> Back to Home
+                </a>
+            </div>
+        }
+        else
+        {
+            <div class="app-card shadow-sm">
+                <div class="list-group list-group-flush">
+                    @foreach (var notification in Model)
+                    {
+                        var isUnread = !notification.IsRead;
+                        <div class="list-group-item p-3 @(isUnread ? "bg-primary-subtle bg-opacity-25" : "")">
+                            <div class="d-flex justify-content-between align-items-start gap-2">
+                                <div class="d-flex align-items-start gap-3">
+                                    <div class="text-primary fs-4 mt-1">
+                                        @if (isUnread)
+                                        {
+                                            <i class="bi bi-bell-fill text-warning"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="bi bi-bell text-muted"></i>
+                                        }
+                                    </div>
+                                    <div>
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <h6 class="fw-bold mb-0 text-dark">@notification.Title</h6>
+                                            @if (isUnread)
+                                            {
+                                                <span class="badge bg-warning text-dark small">New</span>
+                                            }
+                                        </div>
+                                        <p class="text-secondary small mb-2">@notification.Message</p>
+                                        <div class="d-flex align-items-center gap-3 text-muted small">
+                                            <span><i class="bi bi-clock me-1"></i>@notification.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy h:mm tt")</span>
+                                            @if (notification.OrderId.HasValue)
+                                            {
+                                                <a asp-controller="Order" asp-action="Details" asp-route-id="@notification.OrderId.Value" class="text-primary fw-semibold text-decoration-none">
+                                                    <i class="bi bi-box-arrow-up-right me-1"></i> View Order
+                                                </a>
+                                            }
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (isUnread)
+                                {
+                                    <form asp-action="MarkAsRead" method="post">
+                                        <input type="hidden" name="id" value="@notification.Id" />
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Mark as Read">
+                                            <i class="bi bi-check2"></i>
+                                        </button>
+                                    </form>
+                                }
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    </div>
+</div>

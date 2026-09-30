@@ -1,0 +1,106 @@
+@model IEnumerable<Bitely.Models.Order>
+
+@{
+    ViewData["Title"] = "My Orders";
+}
+
+<div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div>
+        <h2 class="fw-bold mb-1"><i class="bi bi-bag-check text-primary me-2"></i>My Orders</h2>
+        <p class="text-muted mb-0">Track all your food court orders and live preparation statuses</p>
+    </div>
+    <a asp-controller="FoodStall" asp-action="Index" class="btn btn-outline-primary">
+        <i class="bi bi-shop me-1"></i> Order More Food
+    </a>
+</div>
+
+@if (!Model.Any())
+{
+    <div class="empty-state">
+        <div class="empty-state-icon text-muted">
+            <i class="bi bi-receipt-cutoff"></i>
+        </div>
+        <div class="empty-state-title">No Orders Placed Yet</div>
+        <div class="empty-state-text">
+            You haven't placed any food court orders yet. Browse our open stalls and build your meal!
+        </div>
+        <a asp-controller="FoodStall" asp-action="Index" class="btn btn-primary">
+            <i class="bi bi-shop me-1"></i> Browse Food Stalls
+        </a>
+    </div>
+}
+else
+{
+    <div class="row g-4">
+        @foreach (var order in Model)
+        {
+            var badgeClass = order.Status switch
+            {
+                "Pending" => "bg-warning-subtle text-warning-emphasis border border-warning",
+                "Preparing" => "bg-primary-subtle text-primary border border-primary",
+                "Ready" => "bg-success-subtle text-success border border-success",
+                "Completed" => "bg-secondary-subtle text-secondary border border-secondary",
+                "Cancelled" => "bg-danger-subtle text-danger border border-danger",
+                _ => "bg-light text-dark border"
+            };
+
+            var statusIcon = order.Status switch
+            {
+                "Pending" => "bi-hourglass-split",
+                "Preparing" => "bi-fire",
+                "Ready" => "bi-bell-fill",
+                "Completed" => "bi-check2-all",
+                "Cancelled" => "bi-x-circle",
+                _ => "bi-info-circle"
+            };
+
+            <div class="col-md-6 col-lg-4">
+                <div class="app-card app-card-hover h-100 d-flex flex-column">
+                    <div class="app-card-header d-flex justify-content-between align-items-center py-3">
+                        <span class="fw-bold text-dark font-monospace">@order.OrderNumber</span>
+                        <span class="badge @badgeClass py-1 px-2 rounded-pill small">
+                            <i class="bi @statusIcon me-1"></i> @order.Status
+                        </span>
+                    </div>
+
+                    <div class="app-card-body flex-grow-1">
+                        <h5 class="fw-bold mb-1 text-dark">
+                            <i class="bi bi-shop text-primary me-1"></i> @(order.FoodStall?.Name ?? "Food Stall")
+                        </h5>
+                        <p class="text-muted small mb-3">
+                            <i class="bi bi-geo-alt me-1"></i> @(order.FoodStall?.Location ?? "Counter") &nbsp;|&nbsp;
+                            <i class="bi bi-clock me-1"></i> @order.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy h:mm tt")
+                        </p>
+
+                        <div class="bg-light p-2 rounded-2 mb-3 small">
+                            <div class="d-flex justify-content-between mb-1">
+                                <span class="text-muted">Items ordered:</span>
+                                <span class="fw-semibold">@order.OrderItems.Sum(oi => oi.Quantity) items</span>
+                            </div>
+                            <div class="d-flex justify-content-between">
+                                <span class="text-muted">Total Amount:</span>
+                                <span class="fw-bold text-primary fs-6">$@order.TotalAmount.ToString("F2")</span>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrWhiteSpace(order.CustomerNote))
+                        {
+                            <p class="text-secondary small fst-italic mb-0">
+                                <i class="bi bi-chat-left-text me-1"></i> "@order.CustomerNote"
+                            </p>
+                        }
+                    </div>
+
+                    <div class="app-card-footer d-flex justify-content-between align-items-center py-2 bg-light">
+                        <small class="text-muted">
+                            @order.OrderItems.Count distinct dish@(order.OrderItems.Count > 1 ? "es" : "")
+                        </small>
+                        <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye me-1"></i> View Order
+                        </a>
+                    </div>
+                </div>
+            </div>
+        }
+    </div>
+}

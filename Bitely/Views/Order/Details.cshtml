@@ -1,0 +1,124 @@
+@model Bitely.Models.Order
+
+@{
+    ViewData["Title"] = $"Order Details - {Model.OrderNumber}";
+    var isStallOwner = (bool)(ViewBag.IsStallOwner ?? false);
+
+    var badgeClass = Model.Status switch
+    {
+        "Pending" => "bg-warning-subtle text-warning-emphasis border border-warning",
+        "Preparing" => "bg-primary-subtle text-primary border border-primary",
+        "Ready" => "bg-success-subtle text-success border border-success",
+        "Completed" => "bg-secondary-subtle text-secondary border border-secondary",
+        "Cancelled" => "bg-danger-subtle text-danger border border-danger",
+        _ => "bg-light text-dark border"
+    };
+}
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="mb-3">
+            @if (isStallOwner)
+            {
+                <a asp-action="StallOrders" asp-route-foodStallId="@Model.FoodStallId" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Stall Orders
+                </a>
+            }
+            else
+            {
+                <a asp-action="Index" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back to My Orders
+                </a>
+            }
+        </div>
+
+        <div class="app-card shadow-sm mb-4">
+            <div class="app-card-header d-flex justify-content-between align-items-center flex-wrap gap-2 py-3">
+                <div>
+                    <h4 class="fw-bold mb-0 text-dark">Order @Model.OrderNumber</h4>
+                    <small class="text-muted"><i class="bi bi-clock me-1"></i>Placed on @Model.CreatedAt.ToLocalTime().ToString("f")</small>
+                </div>
+                <span class="badge @badgeClass py-2 px-3 fs-6 rounded-pill">
+                    Status: @Model.Status
+                </span>
+            </div>
+
+            <div class="app-card-body p-4">
+                <div class="row g-3 mb-4">
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 h-100 border">
+                            <h6 class="fw-bold text-muted mb-2"><i class="bi bi-shop text-primary me-1"></i> Food Stall Details</h6>
+                            <h5 class="fw-bold text-dark mb-1">@(Model.FoodStall?.Name ?? "Food Stall")</h5>
+                            <p class="text-muted small mb-0"><i class="bi bi-geo-alt me-1"></i> @(Model.FoodStall?.Location ?? "Food Court")</p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="p-3 bg-light rounded-3 h-100 border">
+                            <h6 class="fw-bold text-muted mb-2"><i class="bi bi-person text-primary me-1"></i> Customer Details</h6>
+                            <h5 class="fw-bold text-dark mb-1">@(Model.Customer?.Name ?? Model.Customer?.UserName ?? "Customer")</h5>
+                            <p class="text-muted small mb-0"><i class="bi bi-envelope me-1"></i> @(Model.Customer?.Email ?? "N/A")</p>
+                        </div>
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(Model.CustomerNote))
+                {
+                    <div class="alert alert-secondary py-2 px-3 small mb-4">
+                        <i class="bi bi-chat-left-text-fill me-1 text-primary"></i> <strong>Customer Note:</strong> @Model.CustomerNote
+                    </div>
+                }
+
+                <h5 class="fw-bold mb-3"><i class="bi bi-card-checklist text-primary me-2"></i>Order Items</h5>
+                <div class="table-responsive app-table mb-4">
+                    <table class="table mb-0">
+                        <thead>
+                            <tr>
+                                <th>Item Name</th>
+                                <th class="text-center">Price</th>
+                                <th class="text-center">Quantity</th>
+                                <th class="text-end">Subtotal</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in Model.OrderItems)
+                            {
+                                <tr>
+                                    <td class="fw-semibold text-dark">@item.ItemName</td>
+                                    <td class="text-center">$@item.UnitPrice.ToString("F2")</td>
+                                    <td class="text-center">@item.Quantity</td>
+                                    <td class="text-end fw-bold text-dark">$@item.Subtotal.ToString("F2")</td>
+                                </tr>
+                            }
+                        </tbody>
+                        <tfoot class="table-light">
+                            <tr>
+                                <th colspan="3" class="text-end fs-6">Total Amount:</th>
+                                <th class="text-end fs-5 text-primary fw-bold">$@Model.TotalAmount.ToString("F2")</th>
+                            </tr>
+                        </tfoot>
+                    </table>
+                </div>
+
+                @if (isStallOwner)
+                {
+                    <div class="p-3 border rounded-3 bg-light">
+                        <h6 class="fw-bold mb-2"><i class="bi bi-arrow-repeat me-1 text-primary"></i> Update Order Status</h6>
+                        <form asp-action="UpdateStatus" method="post" class="d-flex align-items-center flex-wrap gap-2">
+                            <input type="hidden" name="id" value="@Model.Id" />
+                            <select name="newStatus" class="form-select w-auto">
+                                <option value="Pending" selected="@(Model.Status == "Pending")">Pending</option>
+                                <option value="Preparing" selected="@(Model.Status == "Preparing")">Preparing</option>
+                                <option value="Ready" selected="@(Model.Status == "Ready")">Ready for Pickup</option>
+                                <option value="Completed" selected="@(Model.Status == "Completed")">Completed</option>
+                                <option value="Cancelled" selected="@(Model.Status == "Cancelled")">Cancelled</option>
+                            </select>
+                            <button type="submit" class="btn btn-primary btn-sm">
+                                <i class="bi bi-check2 me-1"></i> Update Status
+                            </button>
+                        </form>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
