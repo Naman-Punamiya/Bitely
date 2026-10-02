@@ -1,7 +1,7 @@
 @model Bitely.Models.Cart
 
 @{
-    ViewData["Title"] = "Checkout - Full Cart";
+    ViewData["Title"] = "Checkout";
     var stallGroups = Model.CartItems
         .Where(ci => ci.MenuItem != null)
         .GroupBy(ci => ci.MenuItem!.FoodStall);
@@ -16,10 +16,10 @@
 
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
             <div>
-                <h2 class="fw-bold mb-1"><i class="bi bi-credit-card-2-front text-primary me-2"></i>Checkout & Buy Full Cart</h2>
-                <p class="text-muted mb-0">Confirm your items and submit orders to all related food stall owners</p>
+                <h2 class="fw-bold mb-1"><i class="bi bi-credit-card-2-front text-primary me-2"></i>Checkout</h2>
+                <p class="text-muted mb-0">Confirm items and submit your food court orders</p>
             </div>
-            <span class="badge bg-primary fs-6 px-3 py-2">
+            <span class="badge bg-light text-primary border fs-6 px-3 py-2">
                 @Model.CartItems.Sum(ci => ci.Quantity) Total Items
             </span>
         </div>
@@ -27,23 +27,23 @@
         <form asp-controller="Order" asp-action="PlaceOrder" method="post">
             <div class="row g-4">
                 <div class="col-md-7">
-                    <h5 class="fw-bold mb-3"><i class="bi bi-shop me-1 text-primary"></i>Food Outlets & Items</h5>
+                    <h5 class="fw-bold mb-3"><i class="bi bi-shop me-1 text-primary"></i>Food Outlets & Dishes</h5>
 
                     @foreach (var group in stallGroups)
                     {
                         var stall = group.Key;
                         var stallTotal = group.Sum(ci => ci.UnitPrice * ci.Quantity);
 
-                        <div class="app-card shadow-sm mb-3">
-                            <div class="app-card-header bg-light d-flex justify-content-between align-items-center py-2 px-3">
+                        <div class="app-card mb-3 border bg-white rounded-3 shadow-sm">
+                            <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light rounded-top-3">
                                 <div>
                                     <strong class="text-dark">@(stall?.Name ?? "Food Stall")</strong>
                                     <span class="text-muted small ms-2"><i class="bi bi-geo-alt"></i> @(stall?.Location ?? "Counter")</span>
                                 </div>
-                                <span class="badge-open small"><i class="bi bi-bell-fill me-1"></i> Owner will be notified</span>
+                                <span class="badge-open small"><i class="bi bi-bell me-1"></i> Notifies Vendor</span>
                             </div>
 
-                            <div class="app-card-body p-3">
+                            <div class="p-3">
                                 <ul class="list-group list-group-flush mb-0">
                                     @foreach (var item in group)
                                     {
@@ -52,65 +52,57 @@
                                                 <span class="fw-semibold text-dark">@(item.MenuItem?.Name ?? "Item")</span>
                                                 <span class="text-muted small ms-1">&times; @item.Quantity</span>
                                             </div>
-                                            <span class="text-dark fw-bold">$@((item.UnitPrice * item.Quantity).ToString("F2"))</span>
+                                            <span class="text-dark fw-bold">₹@((item.UnitPrice * item.Quantity).ToString("F2"))</span>
                                         </li>
                                     }
                                 </ul>
                             </div>
 
-                            <div class="app-card-footer d-flex justify-content-between py-2 px-3 bg-light">
-                                <small class="text-muted">Subtotal for stall:</small>
-                                <strong class="text-primary">$@stallTotal.ToString("F2")</strong>
+                            <div class="p-2 px-3 bg-light border-top rounded-bottom-3 d-flex justify-content-between">
+                                <small class="text-muted">Stall subtotal:</small>
+                                <strong class="text-primary">₹@stallTotal.ToString("F2")</strong>
                             </div>
                         </div>
                     }
 
-                    <div class="app-card shadow-sm p-3 mb-4">
+                    <div class="app-card p-3 mb-4 border bg-white rounded-3 shadow-sm">
                         <label for="customerNote" class="form-label fw-bold mb-1">
-                            <i class="bi bi-pencil-square me-1"></i> Order Notes & Dining Preference (Optional)
+                            <i class="bi bi-pencil-square me-1"></i> Order Note / Preferences (Optional)
                         </label>
-                        <textarea id="customerNote" name="customerNote" class="form-control" rows="2" placeholder="e.g. Table #12, Dine-in, Extra napkins, or specific preferences..."></textarea>
+                        <textarea id="customerNote" name="customerNote" class="form-control" rows="2" placeholder="e.g. Extra spicy, Dine-in, Table #4..."></textarea>
                     </div>
                 </div>
 
                 <div class="col-md-5">
-                    <div class="app-card shadow-sm sticky-top" style="top: 1.5rem;">
-                        <div class="app-card-header py-3">
-                            <h5 class="fw-bold mb-0">Payment Summary</h5>
+                    <div class="app-card border bg-white rounded-3 shadow-sm p-4 sticky-top" style="top: 1.5rem;">
+                        <h5 class="fw-bold mb-3">Summary</h5>
+
+                        <div class="d-flex justify-content-between mb-2 small text-muted">
+                            <span>Food Stalls:</span>
+                            <span class="fw-semibold text-dark">@stallGroups.Count()</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-2 small text-muted">
+                            <span>Total Items:</span>
+                            <span class="fw-semibold text-dark">@Model.CartItems.Sum(ci => ci.Quantity)</span>
+                        </div>
+                        <div class="d-flex justify-content-between mb-3 small text-muted">
+                            <span>Payment:</span>
+                            <span class="fw-semibold text-success"><i class="bi bi-wallet2 me-1"></i> Pay on Pickup</span>
                         </div>
 
-                        <div class="app-card-body p-4">
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">Total Food Stalls:</span>
-                                <span class="fw-semibold">@stallGroups.Count()</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-2">
-                                <span class="text-muted">Total Items:</span>
-                                <span class="fw-semibold">@Model.CartItems.Sum(ci => ci.Quantity)</span>
-                            </div>
-                            <div class="d-flex justify-content-between mb-3">
-                                <span class="text-muted">Payment Method:</span>
-                                <span class="fw-semibold text-success"><i class="bi bi-wallet2 me-1"></i> Food Court Counter / Pay on Pickup</span>
-                            </div>
+                        <hr class="my-3" />
 
-                            <hr />
-
-                            <div class="d-flex justify-content-between align-items-center mb-4">
-                                <span class="fs-5 fw-bold text-dark">Grand Total:</span>
-                                <span class="fs-3 fw-bold text-primary">$@grandTotal.ToString("F2")</span>
-                            </div>
-
-                            <div class="d-grid mb-3">
-                                <button type="submit" class="btn btn-primary btn-lg shadow-sm">
-                                    <i class="bi bi-check2-circle me-1"></i> Confirm & Buy Full Cart
-                                </button>
-                            </div>
-
-                            <div class="alert alert-info py-2 px-3 small mb-0">
-                                <i class="bi bi-info-circle me-1"></i>
-                                Once confirmed, each food stall owner will receive an instant order notification and begin preparing your food.
-                            </div>
+                        <div class="d-flex justify-content-between align-items-center mb-4">
+                            <span class="fs-5 fw-bold text-dark">Grand Total:</span>
+                            <span class="fs-3 fw-bold text-primary">₹@grandTotal.ToString("F2")</span>
                         </div>
+
+                        <button type="submit" class="btn btn-primary btn-lg w-100 mb-2">
+                            <i class="bi bi-bag-check-fill me-1"></i> Place Order & Get Token
+                        </button>
+                        <a asp-controller="Cart" asp-action="Index" class="btn btn-sm btn-outline-secondary w-100">
+                            Back to Cart
+                        </a>
                     </div>
                 </div>
             </div>

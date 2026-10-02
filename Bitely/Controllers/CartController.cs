@@ -122,6 +122,75 @@ namespace Bitely.Controllers
 
         [HttpPost]
         [ValidateAntiForgeryToken]
+        public async Task<IActionResult> UpdateItemQuantity(int menuItemId, int quantity, string? returnUrl = null)
+        {
+            var userId = GetCurrentUserId();
+            if (userId == null)
+            {
+                return Challenge();
+            }
+
+            var cart = await _context.Carts
+                .Include(c => c.CartItems)
+                .FirstOrDefaultAsync(c => c.CustomerId == userId);
+
+            if (cart == null)
+            {
+                if (quantity <= 0)
+                {
+                    return RedirectBack(returnUrl);
+                }
+
+                cart = new Cart
+                {
+                    CustomerId = userId,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                _context.Carts.Add(cart);
+                await _context.SaveChangesAsync();
+            }
+
+            var cartItem = cart.CartItems.FirstOrDefault(ci => ci.MenuItemId == menuItemId);
+
+            if (cartItem != null)
+            {
+                if (quantity <= 0)
+                {
+                    _context.CartItems.Remove(cartItem);
+                    TempData["InfoMessage"] = "Item removed from your cart.";
+                }
+                else
+                {
+                    cartItem.Quantity = quantity;
+                    TempData["SuccessMessage"] = "Cart updated successfully.";
+                }
+            }
+            else if (quantity > 0)
+            {
+                var menuItem = await _context.MenuItems.FindAsync(menuItemId);
+                if (menuItem != null)
+                {
+                    cartItem = new CartItem
+                    {
+                        CartId = cart.Id,
+                        MenuItemId = menuItemId,
+                        Quantity = quantity,
+                        UnitPrice = menuItem.Price
+                    };
+                    _context.CartItems.Add(cartItem);
+                    TempData["SuccessMessage"] = $"Added '{menuItem.Name}' to your cart!";
+                }
+            }
+
+            cart.UpdatedAt = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
+            return RedirectBack(returnUrl);
+        }
+
+        [HttpPost]
+        [ValidateAntiForgeryToken]
         public async Task<IActionResult> UpdateQuantity(int cartItemId, int quantity)
         {
             var userId = GetCurrentUserId();

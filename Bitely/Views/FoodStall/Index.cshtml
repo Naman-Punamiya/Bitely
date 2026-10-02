@@ -9,30 +9,32 @@
 
 <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
     <div>
-        <h2 class="fw-bold mb-1">Food Stalls</h2>
+        <h2 class="fw-bold mb-1">
+            <i class="bi bi-grid text-primary me-2"></i>Food Stalls
+        </h2>
         <p class="text-muted mb-0">Browse all available food stalls in the food court</p>
     </div>
     @if (isOwnerRole)
     {
-        <a asp-action="Create" class="btn btn-primary">
-            <i class="bi bi-plus-lg me-1"></i> Create Food Stall
+        <a asp-action="Create" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-plus-circle me-1"></i> Add Food Stall
         </a>
     }
 </div>
 
 @if (!Model.Any())
 {
-    <div class="empty-state">
-        <div class="empty-state-icon">
+    <div class="empty-state py-5 shadow-sm">
+        <div class="empty-state-icon fs-1 text-muted">
             <i class="bi bi-shop"></i>
         </div>
-        <div class="empty-state-title">No Food Stalls Found</div>
-        <div class="empty-state-text">
-            There are currently no food stalls registered in the system.
-        </div>
+        <h5 class="empty-state-title">No Food Stalls Registered</h5>
+        <p class="empty-state-text small">
+            There are currently no food stalls registered in the food court.
+        </p>
         @if (isOwnerRole)
         {
-            <a asp-action="Create" class="btn btn-primary">
+            <a asp-action="Create" class="btn btn-sm btn-primary">
                 <i class="bi bi-plus-lg me-1"></i> Add the First Stall
             </a>
         }
@@ -40,59 +42,64 @@
 }
 else
 {
-    <div class="row g-4">
+    <div class="row g-3 g-md-4">
         @foreach (var item in Model)
         {
             var isMyStall = currentUserId != null && item.OwnerId == currentUserId;
             <div class="col-md-6 col-lg-4">
-                <div class="app-card app-card-hover h-100 d-flex flex-column">
-                    <div class="app-card-body flex-grow-1">
-                        <div class="d-flex align-items-start justify-content-between mb-2">
-                            <h5 class="fw-bold mb-0 text-dark">@item.Name</h5>
+                <div class="app-card h-100 d-flex flex-column border bg-white rounded-3 shadow-none hover-shadow transition">
+                    <div class="p-3 flex-grow-1">
+                        <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                            <h5 class="fw-bold mb-0 text-dark">
+                                <i class="bi bi-shop text-primary me-1"></i>@item.Name
+                            </h5>
                             @if (item.IsOpen)
                             {
-                                <span class="badge-open">
+                                <span class="badge-open small py-0 px-2">
                                     <i class="bi bi-check-circle-fill me-1"></i> Open
                                 </span>
                             }
                             else
                             {
-                                <span class="badge-closed">
+                                <span class="badge-closed small py-0 px-2">
                                     <i class="bi bi-x-circle-fill me-1"></i> Closed
                                 </span>
                             }
                         </div>
 
-                        <p class="text-muted small mb-3">
+                        <p class="text-muted small mb-2">
                             <i class="bi bi-geo-alt text-primary me-1"></i> @item.Location
                         </p>
 
-                        <p class="text-secondary mb-3">
-                            @(string.IsNullOrWhiteSpace(item.Description) ? "No description provided." : item.Description)
-                        </p>
+                        @if (!string.IsNullOrWhiteSpace(item.Description))
+                        {
+                            <p class="text-secondary small mb-2">
+                                @item.Description
+                            </p>
+                        }
 
-                        <div class="small text-muted mb-2">
+                        <div class="small text-muted">
                             <i class="bi bi-person me-1"></i> Owner: <strong>@(item.Owner?.Name ?? item.Owner?.UserName ?? "Vendor")</strong>
                         </div>
                     </div>
 
-                    <div class="app-card-footer d-flex justify-content-between align-items-center">
+                    <div class="p-3 pt-2 bg-light border-top rounded-bottom-3 d-flex justify-content-between align-items-center">
                         <div class="d-flex gap-2">
-                            <a asp-controller="Menu" asp-action="Index" asp-route-foodStallId="@item.Id" class="btn btn-sm btn-outline-primary">
-                                <i class="bi bi-book me-1"></i> Menu
+                            <a asp-controller="Menu" asp-action="Index" asp-route-foodStallId="@item.Id" class="btn btn-sm btn-primary py-1 px-3">
+                                <i class="bi bi-card-checklist me-1"></i> Menu
                             </a>
-                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-light border">
-                                <i class="bi bi-info-circle me-1"></i> Details
+                            <a asp-action="Details" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary py-1 px-2">
+                                Details
                             </a>
                         </div>
 
                         @if (isOwnerRole && isMyStall)
                         {
                             <div class="btn-group">
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary" title="Edit Stall">
+                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary py-1" title="Edit Stall">
                                     <i class="bi bi-pencil"></i>
                                 </a>
-                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger" title="Delete Stall">
+                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger py-1" title="Delete Stall">
                                     <i class="bi bi-trash"></i>
                                 </a>
                             </div>

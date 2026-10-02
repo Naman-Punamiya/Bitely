@@ -9,38 +9,38 @@
         <h2 class="fw-bold mb-1"><i class="bi bi-bag-check text-primary me-2"></i>My Orders</h2>
         <p class="text-muted mb-0">Track all your food court orders and live preparation statuses</p>
     </div>
-    <a asp-controller="FoodStall" asp-action="Index" class="btn btn-outline-primary">
-        <i class="bi bi-shop me-1"></i> Order More Food
+    <a asp-controller="Menu" asp-action="Index" class="btn btn-sm btn-outline-primary">
+        <i class="bi bi-card-checklist me-1"></i> Browse Menus
     </a>
 </div>
 
 @if (!Model.Any())
 {
-    <div class="empty-state">
-        <div class="empty-state-icon text-muted">
+    <div class="empty-state py-5 shadow-sm text-center">
+        <div class="empty-state-icon fs-1 text-muted mb-2">
             <i class="bi bi-receipt-cutoff"></i>
         </div>
-        <div class="empty-state-title">No Orders Placed Yet</div>
-        <div class="empty-state-text">
-            You haven't placed any food court orders yet. Browse our open stalls and build your meal!
-        </div>
-        <a asp-controller="FoodStall" asp-action="Index" class="btn btn-primary">
-            <i class="bi bi-shop me-1"></i> Browse Food Stalls
+        <h5 class="empty-state-title">No Orders Placed Yet</h5>
+        <p class="empty-state-text small text-muted mb-3">
+            You haven't placed any food court orders yet.
+        </p>
+        <a asp-controller="Menu" asp-action="Index" class="btn btn-sm btn-primary">
+            <i class="bi bi-shop me-1"></i> Explore Digital Menus
         </a>
     </div>
 }
 else
 {
-    <div class="row g-4">
+    <div class="row g-3 g-md-4">
         @foreach (var order in Model)
         {
             var badgeClass = order.Status switch
             {
-                "Pending" => "bg-warning-subtle text-warning-emphasis border border-warning",
-                "Preparing" => "bg-primary-subtle text-primary border border-primary",
-                "Ready" => "bg-success-subtle text-success border border-success",
-                "Completed" => "bg-secondary-subtle text-secondary border border-secondary",
-                "Cancelled" => "bg-danger-subtle text-danger border border-danger",
+                "Pending" => "badge-role",
+                "Preparing" => "badge-open",
+                "Ready" => "badge-open fw-bold",
+                "Completed" => "bg-light text-muted border",
+                "Cancelled" => "badge-closed",
                 _ => "bg-light text-dark border"
             };
 
@@ -55,48 +55,48 @@ else
             };
 
             <div class="col-md-6 col-lg-4">
-                <div class="app-card app-card-hover h-100 d-flex flex-column">
-                    <div class="app-card-header d-flex justify-content-between align-items-center py-3">
+                <div class="app-card h-100 d-flex flex-column border bg-white rounded-3 shadow-none hover-shadow transition">
+                    <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light rounded-top-3">
                         <span class="fw-bold text-dark font-monospace">@order.OrderNumber</span>
                         <span class="badge @badgeClass py-1 px-2 rounded-pill small">
                             <i class="bi @statusIcon me-1"></i> @order.Status
                         </span>
                     </div>
 
-                    <div class="app-card-body flex-grow-1">
+                    <div class="p-3 flex-grow-1">
                         <h5 class="fw-bold mb-1 text-dark">
                             <i class="bi bi-shop text-primary me-1"></i> @(order.FoodStall?.Name ?? "Food Stall")
                         </h5>
                         <p class="text-muted small mb-3">
                             <i class="bi bi-geo-alt me-1"></i> @(order.FoodStall?.Location ?? "Counter") &nbsp;|&nbsp;
-                            <i class="bi bi-clock me-1"></i> @order.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy h:mm tt")
+                            <i class="bi bi-clock me-1"></i> @order.CreatedAt.ToLocalTime().ToString("MMM dd, h:mm tt")
                         </p>
 
-                        <div class="bg-light p-2 rounded-2 mb-3 small">
-                            <div class="d-flex justify-content-between mb-1">
-                                <span class="text-muted">Items ordered:</span>
-                                <span class="fw-semibold">@order.OrderItems.Sum(oi => oi.Quantity) items</span>
+                        <div class="bg-light p-2 rounded-2 mb-2 small">
+                            <div class="d-flex justify-content-between mb-1 text-muted">
+                                <span>Items:</span>
+                                <span class="fw-semibold text-dark">@order.OrderItems.Sum(oi => oi.Quantity) items</span>
                             </div>
                             <div class="d-flex justify-content-between">
-                                <span class="text-muted">Total Amount:</span>
-                                <span class="fw-bold text-primary fs-6">$@order.TotalAmount.ToString("F2")</span>
+                                <span class="text-muted">Total:</span>
+                                <span class="fw-bold text-primary fs-6">₹@order.TotalAmount.ToString("F2")</span>
                             </div>
                         </div>
 
                         @if (!string.IsNullOrWhiteSpace(order.CustomerNote))
                         {
-                            <p class="text-secondary small fst-italic mb-0">
+                            <p class="text-muted small fst-italic mb-0">
                                 <i class="bi bi-chat-left-text me-1"></i> "@order.CustomerNote"
                             </p>
                         }
                     </div>
 
-                    <div class="app-card-footer d-flex justify-content-between align-items-center py-2 bg-light">
+                    <div class="p-3 pt-2 bg-light border-top rounded-bottom-3 d-flex justify-content-between align-items-center">
                         <small class="text-muted">
-                            @order.OrderItems.Count distinct dish@(order.OrderItems.Count > 1 ? "es" : "")
+                            @order.OrderItems.Count dish@(order.OrderItems.Count > 1 ? "es" : "")
                         </small>
-                        <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary">
-                            <i class="bi bi-eye me-1"></i> View Order
+                        <a asp-action="Details" asp-route-id="@order.Id" class="btn btn-sm btn-outline-primary py-1 px-3">
+                            <i class="bi bi-eye me-1"></i> Receipt
                         </a>
                     </div>
                 </div>

@@ -22,10 +22,14 @@ if (string.IsNullOrWhiteSpace(connectionString) || connectionString.Contains("${
     var dbUser = Environment.GetEnvironmentVariable("DB_USER") ?? "postgres";
     var dbPassword = Environment.GetEnvironmentVariable("DB_PASSWORD") ?? "postgres";
     var dbSslMode = Environment.GetEnvironmentVariable("DB_SSLMODE");
+    if (string.IsNullOrWhiteSpace(dbSslMode))
+    {
+        dbSslMode = "Prefer";
+    }
 
     // SSL is required for Supabase; Trust Server Certificate avoids cert validation issues
-    connectionString = $"Host={dbHost};Port={dbPort};Database={dbName};Username={dbUser};Password={dbPassword};" +
-                       "SSL Mode=Require;Trust Server Certificate=true;No Reset On Close=true;";
+    connectionString = $"Host={dbHost};Port={dbPort};Database={dbName};Username={dbUser};Password={dbPassword};SSL Mode={dbSslMode};" +
+        "Trust Server Certificate=true;No Reset On Close=true;";
 
     Console.WriteLine($"Using connection string: Host={dbHost};Port={dbPort};Database={dbName};Username={dbUser};Password=***");
 

@@ -23,22 +23,74 @@ namespace Bitely.Controllers
             return User.FindFirstValue(ClaimTypes.NameIdentifier);
         }
 
-        public async Task<IActionResult> Index(int foodStallId)
+        public async Task<IActionResult> Index(int? foodStallId = null, string? searchString = null, string? category = null)
         {
-            var foodStall = await _context.FoodStalls
-                .FirstOrDefaultAsync(f => f.Id == foodStallId);
+            var query = _context.FoodStalls
+                .Include(f => f.Owner)
+                .Include(f => f.MenuItems)
+                .AsQueryable();
 
-            if (foodStall == null)
+            if (foodStallId.HasValue && foodStallId.Value > 0)
             {
-                return NotFound();
+                query = query.Where(f => f.Id == foodStallId.Value);
             }
 
-            var menuItems = await _context.MenuItems
-                .Where(m => m.FoodStallId == foodStallId)
+            var foodStalls = await query.OrderBy(f => f.Name).ToListAsync();
+
+            // Collect all unique categories across all items for category filtering
+            var allCategories = await _context.MenuItems
+                .Where(m => !string.IsNullOrEmpty(m.Category))
+                .Select(m => m.Category)
+                .Distinct()
+                .OrderBy(c => c)
                 .ToListAsync();
 
-            ViewBag.FoodStall = foodStall;
-            return View(menuItems);
+            // Collect all stalls for stall filtering
+            var allStalls = await _context.FoodStalls
+                .OrderBy(f => f.Name)
+                .Select(f => new { f.Id, f.Name })
+                .ToListAsync();
+
+            // Apply search or category filtering on the items
+            if (!string.IsNullOrWhiteSpace(searchString) || !string.IsNullOrWhiteSpace(category))
+            {
+                var searchLower = searchString?.Trim().ToLower() ?? string.Empty;
+                var categoryTrim = category?.Trim() ?? string.Empty;
+
+                foreach (var stall in foodStalls)
+                {
+                    stall.MenuItems = stall.MenuItems.Where(m =>
+                        (string.IsNullOrEmpty(categoryTrim) || m.Category.Equals(categoryTrim, StringComparison.OrdinalIgnoreCase)) &&
+                        (string.IsNullOrEmpty(searchLower) ||
+                         m.Name.ToLower().Contains(searchLower) ||
+                         m.Category.ToLower().Contains(searchLower) ||
+                         m.Description.ToLower().Contains(searchLower) ||
+                         stall.Name.ToLower().Contains(searchLower))
+                    ).ToList();
+                }
+
+                // Filter out food stalls that have no matching items if search/category filter is active
+                foodStalls = foodStalls.Where(f => f.MenuItems.Any()).ToList();
+            }
+
+            var currentUserId = GetCurrentUserId();
+            var cartItemDict = new Dictionary<int, int>();
+            if (!string.IsNullOrEmpty(currentUserId))
+            {
+                cartItemDict = await _context.Carts
+                    .Where(c => c.CustomerId == currentUserId)
+                    .SelectMany(c => c.CartItems)
+                    .ToDictionaryAsync(ci => ci.MenuItemId, ci => ci.Quantity);
+            }
+
+            ViewBag.SelectedStallId = foodStallId;
+            ViewBag.SearchString = searchString;
+            ViewBag.SelectedCategory = category;
+            ViewBag.Categories = allCategories;
+            ViewBag.AllStalls = allStalls;
+            ViewBag.CartItemQuantities = cartItemDict;
+
+            return View(foodStalls);
         }
 
         [Authorize(Roles = Roles.FoodStallOwner)]

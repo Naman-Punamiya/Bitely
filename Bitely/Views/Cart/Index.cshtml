@@ -1,7 +1,7 @@
 @model Bitely.Models.Cart
 
 @{
-    ViewData["Title"] = "Your Shopping Cart";
+    ViewData["Title"] = "Shopping Cart";
     var hasItems = Model != null && Model.CartItems != null && Model.CartItems.Any();
     var grandTotal = hasItems ? Model!.CartItems!.Sum(ci => ci.UnitPrice * ci.Quantity) : 0m;
 }
@@ -23,16 +23,16 @@
 
 @if (!hasItems)
 {
-    <div class="empty-state">
-        <div class="empty-state-icon text-muted">
+    <div class="empty-state py-5 shadow-sm text-center">
+        <div class="empty-state-icon fs-1 text-muted mb-2">
             <i class="bi bi-cart-x"></i>
         </div>
-        <div class="empty-state-title">Your Cart is Empty</div>
-        <div class="empty-state-text">
-            Looks like you haven't added any delicious food or drinks to your cart yet.
-        </div>
-        <a asp-controller="FoodStall" asp-action="Index" class="btn btn-primary">
-            <i class="bi bi-shop me-1"></i> Explore Food Stalls
+        <h5 class="empty-state-title">Your Cart is Empty</h5>
+        <p class="empty-state-text small text-muted mb-3">
+            Looks like you haven't added any dishes to your cart yet.
+        </p>
+        <a asp-controller="Menu" asp-action="Index" class="btn btn-sm btn-primary">
+            <i class="bi bi-card-checklist me-1"></i> Browse Digital Menus
         </a>
     </div>
 }
@@ -49,28 +49,28 @@ else
                 var stall = group.Key;
                 var stallSubtotal = group.Sum(ci => ci.UnitPrice * ci.Quantity);
 
-                <div class="app-card shadow-sm mb-4">
-                    <div class="app-card-header bg-light d-flex justify-content-between align-items-center py-3">
+                <div class="app-card mb-4 border bg-white rounded-3 shadow-sm">
+                    <div class="p-3 border-bottom d-flex justify-content-between align-items-center bg-light rounded-top-3">
                         <div>
                             <h5 class="fw-bold mb-0 text-dark">
-                                <i class="bi bi-shop text-primary me-2"></i>@(stall?.Name ?? "Food Stall")
+                                <i class="bi bi-shop text-primary me-1"></i>@(stall?.Name ?? "Food Stall")
                             </h5>
                             <small class="text-muted"><i class="bi bi-geo-alt me-1"></i>@(stall?.Location ?? "Food Court")</small>
                         </div>
-                        <span class="badge bg-light text-dark border">
-                            @group.Count() item@(group.Count() > 1 ? "s" : "")
+                        <span class="badge bg-white text-dark border small">
+                            @group.Count() dish@(group.Count() > 1 ? "es" : "")
                         </span>
                     </div>
 
-                    <div class="table-responsive">
-                        <table class="table align-middle mb-0">
-                            <thead class="table-light small text-muted">
+                    <div class="table-responsive app-table">
+                        <table class="table table-hover align-middle mb-0">
+                            <thead>
                                 <tr>
-                                    <th style="min-width: 180px;">Item</th>
+                                    <th style="min-width: 160px;">Dish</th>
                                     <th>Price</th>
-                                    <th style="min-width: 140px;">Quantity</th>
+                                    <th style="min-width: 120px;">Quantity</th>
                                     <th class="text-end">Subtotal</th>
-                                    <th class="text-end" style="width: 50px;"></th>
+                                    <th class="text-end" style="width: 40px;"></th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -79,27 +79,27 @@ else
                                     var itemSubtotal = item.UnitPrice * item.Quantity;
                                     <tr>
                                         <td>
-                                            <div class="fw-semibold text-dark">@(item.MenuItem?.Name ?? "Menu Item")</div>
-                                            <small class="badge-category">@(item.MenuItem?.Category ?? "General")</small>
+                                            <div class="fw-semibold text-dark">@(item.MenuItem?.Name ?? "Item")</div>
+                                            <span class="badge-category small">@(item.MenuItem?.Category ?? "General")</span>
                                         </td>
-                                        <td>$@item.UnitPrice.ToString("F2")</td>
+                                        <td class="text-muted">₹@item.UnitPrice.ToString("F2")</td>
                                         <td>
                                             <form asp-controller="Cart" asp-action="UpdateQuantity" method="post" class="d-flex align-items-center gap-1">
                                                 <input type="hidden" name="cartItemId" value="@item.Id" />
-                                                <input type="number" name="quantity" value="@item.Quantity" min="1" max="99" class="form-control form-control-sm text-center" style="width: 65px;" />
-                                                <button type="submit" class="btn btn-sm btn-outline-secondary" title="Update Quantity">
+                                                <input type="number" name="quantity" value="@item.Quantity" min="1" max="99" class="form-control form-control-sm text-center px-1" style="width: 55px;" />
+                                                <button type="submit" class="btn btn-sm btn-outline-secondary py-1 px-2" title="Update">
                                                     <i class="bi bi-arrow-repeat"></i>
                                                 </button>
                                             </form>
                                         </td>
                                         <td class="text-end fw-bold text-dark">
-                                            $@itemSubtotal.ToString("F2")
+                                            ₹@itemSubtotal.ToString("F2")
                                         </td>
                                         <td class="text-end">
                                             <form asp-controller="Cart" asp-action="RemoveItem" method="post" class="d-inline">
                                                 <input type="hidden" name="cartItemId" value="@item.Id" />
-                                                <button type="submit" class="btn btn-sm btn-outline-danger border-0 p-1" title="Remove Item">
-                                                    <i class="bi bi-x-circle fs-5"></i>
+                                                <button type="submit" class="btn btn-sm btn-outline-danger border-0" title="Remove">
+                                                    <i class="bi bi-x-lg"></i>
                                                 </button>
                                             </form>
                                         </td>
@@ -109,55 +109,40 @@ else
                         </table>
                     </div>
 
-                    <div class="app-card-footer d-flex justify-content-between align-items-center py-2 bg-light">
-                        <small class="text-muted">Subtotal for <strong>@(stall?.Name ?? "Stall")</strong></small>
-                        <span class="fw-bold text-primary fs-6">$@stallSubtotal.ToString("F2")</span>
+                    <div class="p-3 bg-light border-top rounded-bottom-3 d-flex justify-content-between align-items-center">
+                        <small class="text-muted">Stall Subtotal:</small>
+                        <strong class="text-primary fs-6">₹@stallSubtotal.ToString("F2")</strong>
                     </div>
                 </div>
             }
         </div>
 
         <div class="col-lg-4">
-            <div class="app-card shadow-sm sticky-top" style="top: 1.5rem;">
-                <div class="app-card-header py-3">
-                    <h5 class="fw-bold mb-0">Order Summary</h5>
+            <div class="app-card border bg-white rounded-3 shadow-sm p-4 sticky-top" style="top: 1.5rem;">
+                <h5 class="fw-bold mb-3 text-dark">Order Summary</h5>
+
+                <div class="d-flex justify-content-between mb-2 small text-muted">
+                    <span>Total Food Stalls:</span>
+                    <span class="fw-semibold text-dark">@stallGroups.Count()</span>
+                </div>
+                <div class="d-flex justify-content-between mb-3 small text-muted">
+                    <span>Total Dishes:</span>
+                    <span class="fw-semibold text-dark">@Model!.CartItems!.Sum(ci => ci.Quantity)</span>
                 </div>
 
-                <div class="app-card-body p-4">
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Total Food Stalls:</span>
-                        <span class="fw-semibold">@stallGroups.Count()</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span class="text-muted">Total Items:</span>
-                        <span class="fw-semibold">@Model!.CartItems!.Sum(ci => ci.Quantity)</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-3">
-                        <span class="text-muted">Estimated Tax & Fee:</span>
-                        <span class="text-success fw-semibold">Free / Included</span>
-                    </div>
+                <hr class="my-3" />
 
-                    <hr />
-
-                    <div class="d-flex justify-content-between align-items-center mb-4">
-                        <span class="fs-5 fw-bold text-dark">Full Cart Total:</span>
-                        <span class="fs-4 fw-bold text-primary">$@grandTotal.ToString("F2")</span>
-                    </div>
-
-                    <div class="d-grid gap-2">
-                        <a asp-controller="Order" asp-action="Checkout" class="btn btn-primary btn-lg">
-                            <i class="bi bi-bag-check me-2"></i> Proceed to Checkout
-                        </a>
-                        <a asp-controller="FoodStall" asp-action="Index" class="btn btn-outline-secondary">
-                            <i class="bi bi-arrow-left me-1"></i> Add More Items
-                        </a>
-                    </div>
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <span class="fw-bold text-dark fs-5">Grand Total:</span>
+                    <span class="fw-bold text-primary fs-4">₹@grandTotal.ToString("F2")</span>
                 </div>
 
-                <div class="app-card-footer text-muted small py-3">
-                    <i class="bi bi-bell-fill text-warning me-1"></i>
-                    All relevant stall owners will receive instant notifications upon completing this order.
-                </div>
+                <a asp-controller="Order" asp-action="Checkout" class="btn btn-primary btn-lg w-100 mb-2">
+                    <i class="bi bi-credit-card-2-front me-1"></i> Proceed to Checkout
+                </a>
+                <a asp-controller="Menu" asp-action="Index" class="btn btn-sm btn-outline-secondary w-100">
+                    <i class="bi bi-plus-lg me-1"></i> Add More Items
+                </a>
             </div>
         </div>
     </div>

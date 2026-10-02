@@ -25,22 +25,22 @@
 
         @if (!Model.Any())
         {
-            <div class="empty-state">
-                <div class="empty-state-icon text-muted">
+            <div class="empty-state py-5 shadow-sm text-center">
+                <div class="empty-state-icon fs-1 text-muted mb-2">
                     <i class="bi bi-bell-slash"></i>
                 </div>
-                <div class="empty-state-title">No Notifications</div>
-                <div class="empty-state-text">
+                <h5 class="empty-state-title">No Notifications</h5>
+                <p class="empty-state-text small text-muted mb-3">
                     You're all caught up! When orders or status changes occur, you will be notified here.
-                </div>
-                <a asp-controller="Home" asp-action="Index" class="btn btn-outline-secondary">
+                </p>
+                <a asp-controller="Home" asp-action="Index" class="btn btn-sm btn-outline-secondary">
                     <i class="bi bi-house me-1"></i> Back to Home
                 </a>
             </div>
         }
         else
         {
-            <div class="app-card shadow-sm">
+            <div class="app-card border bg-white rounded-3 shadow-sm overflow-hidden">
                 <div class="list-group list-group-flush">
                     @foreach (var notification in Model)
                     {
@@ -63,12 +63,12 @@
                                             <h6 class="fw-bold mb-0 text-dark">@notification.Title</h6>
                                             @if (isUnread)
                                             {
-                                                <span class="badge bg-warning text-dark small">New</span>
+                                                <span class="badge bg-warning text-dark small py-0 px-2">New</span>
                                             }
                                         </div>
                                         <p class="text-secondary small mb-2">@notification.Message</p>
                                         <div class="d-flex align-items-center gap-3 text-muted small">
-                                            <span><i class="bi bi-clock me-1"></i>@notification.CreatedAt.ToLocalTime().ToString("MMM dd, yyyy h:mm tt")</span>
+                                            <span><i class="bi bi-clock me-1"></i>@notification.CreatedAt.ToLocalTime().ToString("MMM dd, h:mm tt")</span>
                                             @if (notification.OrderId.HasValue)
                                             {
                                                 <a asp-controller="Order" asp-action="Details" asp-route-id="@notification.OrderId.Value" class="text-primary fw-semibold text-decoration-none">
@@ -83,7 +83,7 @@
                                 {
                                     <form asp-action="MarkAsRead" method="post">
                                         <input type="hidden" name="id" value="@notification.Id" />
-                                        <button type="submit" class="btn btn-sm btn-outline-secondary" title="Mark as Read">
+                                        <button type="submit" class="btn btn-sm btn-outline-secondary py-0 px-2" title="Mark as Read">
                                             <i class="bi bi-check2"></i>
                                         </button>
                                     </form>

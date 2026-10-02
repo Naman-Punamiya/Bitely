@@ -43,6 +43,17 @@ namespace Bitely.Controllers
                 return NotFound();
             }
 
+            var currentUserId = GetCurrentUserId();
+            var cartItemDict = new Dictionary<int, int>();
+            if (!string.IsNullOrEmpty(currentUserId))
+            {
+                cartItemDict = await _context.Carts
+                    .Where(c => c.CustomerId == currentUserId)
+                    .SelectMany(c => c.CartItems)
+                    .ToDictionaryAsync(ci => ci.MenuItemId, ci => ci.Quantity);
+            }
+            ViewBag.CartItemQuantities = cartItemDict;
+
             return View(stall);
         }
 

@@ -1,134 +1,270 @@
-@model IEnumerable<Bitely.Models.MenuItem>
+@model IEnumerable<Bitely.Models.FoodStall>
 @using System.Security.Claims
 
 @{
-    var foodStall = ViewBag.FoodStall as Bitely.Models.FoodStall;
-    ViewData["Title"] = $"Menu - {foodStall?.Name ?? "Food Stall"}";
+    ViewData["Title"] = "Digital Menus";
     var currentUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-    var isMyStall = foodStall != null && currentUserId != null && foodStall.OwnerId == currentUserId;
     var isOwnerRole = User.IsInRole(Bitely.Models.Roles.FoodStallOwner);
+    var selectedStallId = ViewBag.SelectedStallId as int?;
+    var searchString = ViewBag.SearchString as string;
+    var selectedCategory = ViewBag.SelectedCategory as string;
+    var categories = ViewBag.Categories as IEnumerable<string> ?? Enumerable.Empty<string>();
+    var allStalls = ViewBag.AllStalls as IEnumerable<dynamic> ?? Enumerable.Empty<dynamic>();
+    var cartDict = ViewBag.CartItemQuantities as Dictionary<int, int> ?? new Dictionary<int, int>();
+    var hasActiveFilters = !string.IsNullOrWhiteSpace(searchString) || !string.IsNullOrWhiteSpace(selectedCategory) || (selectedStallId.HasValue && selectedStallId > 0);
 }
 
 <div class="mb-4">
-    <a asp-controller="FoodStall" asp-action="Index" class="btn btn-sm btn-outline-secondary mb-3">
-        <i class="bi bi-arrow-left me-1"></i> Back to Food Stalls
-    </a>
-
-    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-4">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3 mb-3">
         <div>
             <h2 class="fw-bold mb-1">
-                <i class="bi bi-book text-primary me-2"></i>Menu for @(foodStall?.Name ?? "Food Stall")
+                <i class="bi bi-card-checklist text-primary me-2"></i>Digital Menus
             </h2>
-            <p class="text-muted mb-0">
-                <i class="bi bi-geo-alt me-1"></i> @(foodStall?.Location ?? "Food Court") &nbsp;|&nbsp;
-                @if (foodStall != null && foodStall.IsOpen)
-                {
-                    <span class="text-success fw-semibold"><i class="bi bi-circle-fill fs-6 me-1"></i> Open</span>
-                }
-                else
-                {
-                    <span class="text-danger fw-semibold"><i class="bi bi-circle-fill fs-6 me-1"></i> Closed</span>
-                }
-            </p>
+            <p class="text-muted mb-0">Browse food shop-wise and add directly to your cart</p>
         </div>
-
-        @if (isOwnerRole && isMyStall && foodStall != null)
+        @if (isOwnerRole)
         {
-            <a asp-action="Create" asp-route-foodStallId="@foodStall.Id" class="btn btn-primary">
-                <i class="bi bi-plus-lg me-1"></i> Add Menu Item
+            <a asp-controller="FoodStall" asp-action="Create" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-plus-circle me-1"></i> Add Food Stall
             </a>
         }
+    </div>
+
+    <!-- Simple Filter Bar -->
+    <div class="app-card p-3 mb-4 bg-white">
+        <form asp-action="Index" method="get" class="row g-2 align-items-center">
+            <div class="col-md-5">
+                <input type="text" name="searchString" value="@searchString" class="form-control form-control-sm" placeholder="Search food, category, or shop..." />
+            </div>
+
+            <div class="col-md-3 col-6">
+                <select name="foodStallId" class="form-select form-select-sm">
+                    <option value="">All Food Shops</option>
+                    @foreach (var s in allStalls)
+                    {
+                        var isSel = selectedStallId.HasValue && selectedStallId.Value == (int)s.Id;
+                        if (isSel)
+                        {
+                            <option value="@s.Id" selected="selected">@s.Name</option>
+                        }
+                        else
+                        {
+                            <option value="@s.Id">@s.Name</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2 col-6">
+                <select name="category" class="form-select form-select-sm">
+                    <option value="">All Categories</option>
+                    @foreach (var cat in categories)
+                    {
+                        var isSel = string.Equals(selectedCategory, cat, StringComparison.OrdinalIgnoreCase);
+                        if (isSel)
+                        {
+                            <option value="@cat" selected="selected">@cat</option>
+                        }
+                        else
+                        {
+                            <option value="@cat">@cat</option>
+                        }
+                    }
+                </select>
+            </div>
+
+            <div class="col-md-2 d-flex gap-1">
+                <button type="submit" class="btn btn-sm btn-primary flex-grow-1">
+                    <i class="bi bi-funnel me-1"></i> Filter
+                </button>
+                @if (hasActiveFilters)
+                {
+                    <a asp-action="Index" class="btn btn-sm btn-outline-secondary" title="Reset Filters">
+                        <i class="bi bi-arrow-counterclockwise"></i>
+                    </a>
+                }
+            </div>
+        </form>
     </div>
 </div>
 
 @if (!Model.Any())
 {
-    <div class="empty-state">
-        <div class="empty-state-icon">
-            <i class="bi bi-card-list"></i>
+    <div class="empty-state py-4 shadow-sm">
+        <div class="empty-state-icon fs-2">
+            <i class="bi bi-search"></i>
         </div>
-        <div class="empty-state-title">No Menu Items Listed</div>
-        <div class="empty-state-text">
-            There are currently no dishes or drinks available on this menu.
-        </div>
-        @if (isOwnerRole && isMyStall && foodStall != null)
+        <h5 class="empty-state-title">No Food Items or Shops Found</h5>
+        <p class="empty-state-text small">
+            @(hasActiveFilters ? "No items match your filter criteria." : "There are currently no food stalls listed.")
+        </p>
+        @if (hasActiveFilters)
         {
-            <a asp-action="Create" asp-route-foodStallId="@foodStall.Id" class="btn btn-primary">
-                <i class="bi bi-plus-lg me-1"></i> Add First Item
+            <a asp-action="Index" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-arrow-counterclockwise me-1"></i> Clear Filters
             </a>
         }
     </div>
 }
 else
 {
-    <div class="row g-4">
-        @foreach (var item in Model)
-        {
-            <div class="col-md-6 col-lg-4">
-                <div class="app-card app-card-hover h-100 d-flex flex-column">
-                    <div class="app-card-body flex-grow-1">
-                        <div class="d-flex justify-content-between align-items-start mb-2">
-                            <h5 class="fw-bold text-dark mb-0">@item.Name</h5>
-                            <span class="fw-bold fs-5 text-primary">₹@item.Price.ToString("F2")</span>
-                        </div>
+    @foreach (var stall in Model)
+    {
+        var isMyStall = currentUserId != null && stall.OwnerId == currentUserId;
 
-                        <div class="mb-3">
-                            <span class="badge-category me-2">@item.Category</span>
-                            @if (item.IsAvailable)
-                            {
-                                <span class="badge-open small">
-                                    <i class="bi bi-check-circle me-1"></i> Available
-                                </span>
-                            }
-                            else
-                            {
-                                <span class="badge-closed small">
-                                    <i class="bi bi-x-circle me-1"></i> Unavailable
-                                </span>
-                            }
-                        </div>
+        <div class="mb-4">
+            <!-- Shop Heading -->
+            <div class="d-flex justify-content-between align-items-center border-bottom pb-2 mb-2 flex-wrap gap-2">
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    <h4 class="fw-bold mb-0 text-dark">
+                        <i class="bi bi-shop text-primary me-1"></i>@stall.Name
+                    </h4>
+                    @if (stall.IsOpen)
+                    {
+                        <span class="badge-open small py-0 px-2">
+                            <i class="bi bi-check-circle-fill me-1"></i> Open
+                        </span>
+                    }
+                    else
+                    {
+                        <span class="badge-closed small py-0 px-2">
+                            <i class="bi bi-x-circle-fill me-1"></i> Closed
+                        </span>
+                    }
+                    <span class="text-muted small ms-1">
+                        <i class="bi bi-geo-alt text-primary me-1"></i>@stall.Location
+                    </span>
+                    @if (!string.IsNullOrWhiteSpace(stall.Owner?.Name ?? stall.Owner?.UserName))
+                    {
+                        <span class="text-muted small ms-1">| Owner: <strong>@(stall.Owner?.Name ?? stall.Owner?.UserName)</strong></span>
+                    }
+                </div>
 
-                        <p class="text-secondary small mb-0">
-                            @(string.IsNullOrWhiteSpace(item.Description) ? "No description provided." : item.Description)
-                        </p>
-                    </div>
-
-                    <div class="app-card-footer d-flex justify-content-between align-items-center gap-2">
-                        @if (isOwnerRole && isMyStall)
-                        {
-                            <span class="small text-muted">Owner options</span>
-                            <div class="btn-group">
-                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary">
-                                    <i class="bi bi-pencil me-1"></i> Edit
-                                </a>
-                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger">
-                                    <i class="bi bi-trash me-1"></i> Delete
-                                </a>
-                            </div>
-                        }
-                        else
-                        {
-                            @if (foodStall != null && foodStall.IsOpen && item.IsAvailable)
-                            {
-                                <form asp-controller="Cart" asp-action="AddToCart" method="post" class="d-flex align-items-center gap-2 ms-auto">
-                                    <input type="hidden" name="menuItemId" value="@item.Id" />
-                                    <input type="hidden" name="returnUrl" value="@Context.Request.Path@Context.Request.QueryString" />
-                                    <input type="number" name="quantity" value="1" min="1" max="20" class="form-control form-control-sm text-center" style="width: 60px;" />
-                                    <button type="submit" class="btn btn-sm btn-primary">
-                                        <i class="bi bi-cart-plus me-1"></i> Add to Cart
-                                    </button>
-                                </form>
-                            }
-                            else
-                            {
-                                <span class="badge bg-light text-muted border ms-auto">
-                                    <i class="bi bi-slash-circle me-1"></i> Not Available to Order
-                                </span>
-                            }
-                        }
-                    </div>
+                <div class="d-flex align-items-center gap-1">
+                    @if (isOwnerRole && isMyStall)
+                    {
+                        <a asp-action="Create" asp-route-foodStallId="@stall.Id" class="btn btn-sm btn-primary">
+                            <i class="bi bi-plus-lg me-1"></i> Add Item
+                        </a>
+                    }
+                    <a asp-controller="FoodStall" asp-action="Details" asp-route-id="@stall.Id" class="btn btn-sm btn-outline-secondary">
+                        <i class="bi bi-info-circle me-1"></i> Details
+                    </a>
                 </div>
             </div>
-        }
-    </div>
+
+            <!-- Shop Foods Table / List -->
+            @if (!stall.MenuItems.Any())
+            {
+                <p class="text-muted small ps-1 mb-3">No menu items listed under this stall.</p>
+            }
+            else
+            {
+                <div class="table-responsive app-table shadow-sm mb-4">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>Item</th>
+                                <th>Category</th>
+                                <th>Price</th>
+                                <th>Description</th>
+                                <th>Availability</th>
+                                <th class="text-end" style="min-width: 170px;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @foreach (var item in stall.MenuItems)
+                            {
+                                <tr>
+                                    <td class="fw-semibold text-dark">@item.Name</td>
+                                    <td>
+                                        <span class="badge-category">@item.Category</span>
+                                    </td>
+                                    <td class="fw-bold text-primary">₹@item.Price.ToString("F2")</td>
+                                    <td class="text-muted small">
+                                        @(string.IsNullOrWhiteSpace(item.Description) ? "-" : item.Description)
+                                    </td>
+                                    <td>
+                                        @if (item.IsAvailable)
+                                        {
+                                            <span class="badge-open small py-0 px-2">
+                                                <i class="bi bi-check me-1"></i> Available
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge-closed small py-0 px-2">
+                                                <i class="bi bi-x me-1"></i> Out of Stock
+                                            </span>
+                                        }
+                                    </td>
+                                    <td class="text-end">
+                                        @if (isOwnerRole && isMyStall)
+                                        {
+                                            <div class="btn-group">
+                                                <a asp-action="Edit" asp-route-id="@item.Id" class="btn btn-sm btn-outline-secondary py-1" title="Edit">
+                                                    <i class="bi bi-pencil"></i>
+                                                </a>
+                                                <a asp-action="Delete" asp-route-id="@item.Id" class="btn btn-sm btn-outline-danger py-1" title="Delete">
+                                                    <i class="bi bi-trash"></i>
+                                                </a>
+                                            </div>
+                                        }
+                                        else
+                                        {
+                                            @if (stall.IsOpen && item.IsAvailable)
+                                            {
+                                                var itemQty = cartDict.ContainsKey(item.Id) ? cartDict[item.Id] : 0;
+                                                if (itemQty > 0)
+                                                {
+                                                    <div class="d-inline-flex align-items-center border rounded bg-white shadow-sm overflow-hidden" style="height: 31px;">
+                                                        <form asp-controller="Cart" asp-action="UpdateItemQuantity" method="post" class="d-inline m-0">
+                                                            <input type="hidden" name="menuItemId" value="@item.Id" />
+                                                            <input type="hidden" name="quantity" value="@(itemQty - 1)" />
+                                                            <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                                                            <button type="submit" class="btn btn-sm btn-light border-0 px-2 py-0 text-danger fw-bold h-100" title="Decrease">
+                                                                <i class="bi bi-dash-lg"></i>
+                                                            </button>
+                                                        </form>
+                                                        <span class="px-2 fw-bold text-dark small" style="min-width: 24px; text-align: center;">@itemQty</span>
+                                                        <form asp-controller="Cart" asp-action="UpdateItemQuantity" method="post" class="d-inline m-0">
+                                                            <input type="hidden" name="menuItemId" value="@item.Id" />
+                                                            <input type="hidden" name="quantity" value="@(itemQty + 1)" />
+                                                            <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                                                            <button type="submit" class="btn btn-sm btn-light border-0 px-2 py-0 text-success fw-bold h-100" title="Increase">
+                                                                <i class="bi bi-plus-lg"></i>
+                                                            </button>
+                                                        </form>
+                                                    </div>
+                                                }
+                                                else
+                                                {
+                                                    <form asp-controller="Cart" asp-action="AddToCart" method="post" class="d-inline-flex align-items-center justify-content-end">
+                                                        <input type="hidden" name="menuItemId" value="@item.Id" />
+                                                        <input type="hidden" name="quantity" value="1" />
+                                                        <input type="hidden" name="returnUrl" value="@(Context.Request.Path + Context.Request.QueryString)" />
+                                                        <button type="submit" class="btn btn-sm btn-outline-primary fw-semibold py-1 px-3 text-nowrap">
+                                                            <i class="bi bi-plus-lg me-1"></i> Add
+                                                        </button>
+                                                    </form>
+                                                }
+                                            }
+                                            else if (!stall.IsOpen)
+                                            {
+                                                <span class="badge bg-light text-muted border py-1 px-2">Stall Closed</span>
+                                            }
+                                            else
+                                            {
+                                                <span class="badge bg-light text-danger border py-1 px-2">Out of Stock</span>
+                                            }
+                                        }
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+        </div>
+    }
 }
