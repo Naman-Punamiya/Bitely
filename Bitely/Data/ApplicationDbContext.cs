@@ -81,6 +81,9 @@ namespace Bitely.Data
                 entity.HasKey(e => e.Id);
                 entity.Property(e => e.OrderNumber).IsRequired().HasMaxLength(50);
                 entity.Property(e => e.Status).IsRequired().HasMaxLength(50);
+                entity.Property(e => e.PaymentMethod).HasMaxLength(50);
+                entity.Property(e => e.PaymentId).HasMaxLength(100);
+                entity.Property(e => e.PaymentStatus).HasMaxLength(50);
                 entity.Property(e => e.TotalAmount).HasPrecision(10, 2);
                 entity.Property(e => e.CustomerNote).HasMaxLength(500);
 

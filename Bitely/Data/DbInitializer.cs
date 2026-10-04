@@ -37,7 +37,7 @@ namespace Bitely.Data
                 }
 
                 // 2. Seed Default Food Stall Owner User
-                var ownerEmail = "owner@bitely.com";
+                var ownerEmail = "shop@mail.com";
                 var defaultOwner = await userManager.FindByEmailAsync(ownerEmail);
                 if (defaultOwner == null)
                 {
@@ -45,10 +45,10 @@ namespace Bitely.Data
                     {
                         UserName = ownerEmail,
                         Email = ownerEmail,
-                        Name = "Shopkeeper / Vendor",
+                        Name = "Shopkeeper",
                         EmailConfirmed = true
                     };
-                    var result = await userManager.CreateAsync(defaultOwner, "Password123");
+                    var result = await userManager.CreateAsync(defaultOwner, "shop123");
                     if (result.Succeeded)
                     {
                         await userManager.AddToRoleAsync(defaultOwner, Roles.FoodStallOwner);
@@ -57,7 +57,7 @@ namespace Bitely.Data
                 }
 
                 // 3. Seed Default Consumer User
-                var consumerEmail = "consumer@bitely.com";
+                var consumerEmail = "cust@mail.com";
                 var defaultConsumer = await userManager.FindByEmailAsync(consumerEmail);
                 if (defaultConsumer == null)
                 {
@@ -65,10 +65,10 @@ namespace Bitely.Data
                     {
                         UserName = consumerEmail,
                         Email = consumerEmail,
-                        Name = "Customer User",
+                        Name = "Customer",
                         EmailConfirmed = true
                     };
-                    var result = await userManager.CreateAsync(defaultConsumer, "Password123");
+                    var result = await userManager.CreateAsync(defaultConsumer, "cust123");
                     if (result.Succeeded)
                     {
                         await userManager.AddToRoleAsync(defaultConsumer, Roles.Consumer);
@@ -94,31 +94,31 @@ namespace Bitely.Data
                             {
                                 new MenuItem
                                 {
-                                    Name = "Lila Bhaat",
-                                    Category = "Chokha & Rice",
+                                    Name = "Hyderabadi Pulav",
+                                    Category = "Rice",
                                     Price = 60.00m,
                                     Description = "Special spiced green rice served with curd chutney",
                                     IsAvailable = true
                                 },
                                 new MenuItem
                                 {
-                                    Name = "Lal Bhaat",
-                                    Category = "Chokha & Rice",
+                                    Name = "Mug Pulav",
+                                    Category = "Rice",
                                     Price = 50.00m,
                                     Description = "Spicy red chili flavored masala rice topped with crispy sev",
                                     IsAvailable = true
                                 },
                                 new MenuItem
                                 {
-                                    Name = "Special Mug Pulav",
-                                    Category = "Chokha & Rice",
-                                    Price = 80.00m,
-                                    Description = "Signature boiled mug pulav prepared with fresh butter & onions",
+                                    Name = "Special Panner Pulav",
+                                    Category = "Rice",
+                                    Price = 120.00m,
+                                    Description = "Signature boiled Panner pulav prepared with fresh butter & onions",
                                     IsAvailable = true
                                 },
                                 new MenuItem
                                 {
-                                    Name = "Masala Chhas",
+                                    Name = "Masala Chaas",
                                     Category = "Beverages",
                                     Price = 15.00m,
                                     Description = "Fresh chilled spiced buttermilk with roasted cumin",
@@ -161,7 +161,7 @@ namespace Bitely.Data
                                 },
                                 new MenuItem
                                 {
-                                    Name = "Thick Cold Coffee",
+                                    Name = "Cold Coffee",
                                     Category = "Beverages",
                                     Price = 59.00m,
                                     Description = "Rich blended cold coffee with chocolate drizzle",
@@ -204,7 +204,7 @@ namespace Bitely.Data
                                 },
                                 new MenuItem
                                 {
-                                    Name = "Filter Kaapi",
+                                    Name = "Filter Coffee",
                                     Category = "Beverages",
                                     Price = 30.00m,
                                     Description = "Traditional hot brewed South Indian filter coffee",

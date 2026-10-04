@@ -6,6 +6,11 @@
         .Where(ci => ci.MenuItem != null)
         .GroupBy(ci => ci.MenuItem!.FoodStall);
     var grandTotal = Model.CartItems.Sum(ci => ci.UnitPrice * ci.Quantity);
+    var grandTotalPaise = (long)Math.Round(grandTotal * 100);
+    var razorpayKeyId = (string)(ViewBag.RazorpayKeyId ?? "rzp_test_YourKeyIdHere");
+    var customerName = (string)(ViewBag.CustomerName ?? "Customer");
+    var customerEmail = (string)(ViewBag.CustomerEmail ?? "");
+    var customerPhone = (string)(ViewBag.CustomerPhone ?? "");
 }
 
 <div class="row justify-content-center">
@@ -16,15 +21,19 @@
 
         <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-4">
             <div>
-                <h2 class="fw-bold mb-1"><i class="bi bi-credit-card-2-front text-primary me-2"></i>Checkout</h2>
-                <p class="text-muted mb-0">Confirm items and submit your food court orders</p>
+                <h2 class="fw-bold mb-1"><i class="bi bi-credit-card-2-front text-primary me-2"></i>Checkout & Payment</h2>
+                <p class="text-muted mb-0">Confirm your dishes and select your payment option</p>
             </div>
             <span class="badge bg-light text-primary border fs-6 px-3 py-2">
                 @Model.CartItems.Sum(ci => ci.Quantity) Total Items
             </span>
         </div>
 
-        <form asp-controller="Order" asp-action="PlaceOrder" method="post">
+        <form id="orderForm" asp-controller="Order" asp-action="PlaceOrder" method="post">
+            <input type="hidden" id="paymentMethodInput" name="paymentMethod" value="Online" />
+            <input type="hidden" id="paymentIdInput" name="paymentId" value="" />
+            <input type="hidden" id="paymentStatusInput" name="paymentStatus" value="Pending" />
+
             <div class="row g-4">
                 <div class="col-md-7">
                     <h5 class="fw-bold mb-3"><i class="bi bi-shop me-1 text-primary"></i>Food Outlets & Dishes</h5>
@@ -71,11 +80,52 @@
                         </label>
                         <textarea id="customerNote" name="customerNote" class="form-control" rows="2" placeholder="e.g. Extra spicy, Dine-in, Table #4..."></textarea>
                     </div>
+
+                    <!-- Payment Method Card Selection -->
+                    <div class="app-card p-4 border bg-white rounded-3 shadow-sm mb-4">
+                        <h5 class="fw-bold mb-3"><i class="bi bi-wallet2 text-primary me-2"></i>Select Payment Method</h5>
+
+                        <div class="row g-3">
+                            <div class="col-sm-6">
+                                <label class="border rounded-3 p-3 d-block cursor-pointer payment-option-card active" id="cardOnline" for="payOnlineRadio" style="cursor: pointer;">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="paymentOptionRadio" id="payOnlineRadio" value="Online" checked onchange="handlePaymentMethodChange('Online')">
+                                        <div class="form-check-label fw-bold text-dark">
+                                            <i class="bi bi-credit-card-2-front text-primary me-1"></i> Online Payment
+                                        </div>
+                                    </div>
+                                    <div class="small text-muted mt-2 ps-4">
+                                        Razorpay Gateway (UPI, Cards, NetBanking, Wallets)
+                                    </div>
+                                    <div class="mt-2 ps-4">
+                                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle small">Instant Confirmation</span>
+                                    </div>
+                                </label>
+                            </div>
+
+                            <div class="col-sm-6">
+                                <label class="border rounded-3 p-3 d-block cursor-pointer payment-option-card" id="cardCash" for="payCashRadio" style="cursor: pointer;">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="radio" name="paymentOptionRadio" id="payCashRadio" value="Cash" onchange="handlePaymentMethodChange('Cash')">
+                                        <div class="form-check-label fw-bold text-dark">
+                                            <i class="bi bi-cash-stack text-success me-1"></i> Cash on Pickup
+                                        </div>
+                                    </div>
+                                    <div class="small text-muted mt-2 ps-4">
+                                        Pay with cash at the stall counter when receiving your food.
+                                    </div>
+                                    <div class="mt-2 ps-4">
+                                        <span class="badge bg-success-subtle text-success border border-success-subtle small">Pay at Stall</span>
+                                    </div>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="col-md-5">
                     <div class="app-card border bg-white rounded-3 shadow-sm p-4 sticky-top" style="top: 1.5rem;">
-                        <h5 class="fw-bold mb-3">Summary</h5>
+                        <h5 class="fw-bold mb-3">Order Summary</h5>
 
                         <div class="d-flex justify-content-between mb-2 small text-muted">
                             <span>Food Stalls:</span>
@@ -86,8 +136,10 @@
                             <span class="fw-semibold text-dark">@Model.CartItems.Sum(ci => ci.Quantity)</span>
                         </div>
                         <div class="d-flex justify-content-between mb-3 small text-muted">
-                            <span>Payment:</span>
-                            <span class="fw-semibold text-success"><i class="bi bi-wallet2 me-1"></i> Pay on Pickup</span>
+                            <span>Payment Method:</span>
+                            <span class="fw-semibold text-primary" id="summaryPaymentLabel">
+                                <i class="bi bi-credit-card-2-front me-1"></i> Online (Razorpay)
+                            </span>
                         </div>
 
                         <hr class="my-3" />
@@ -97,9 +149,14 @@
                             <span class="fs-3 fw-bold text-primary">₹@grandTotal.ToString("F2")</span>
                         </div>
 
-                        <button type="submit" class="btn btn-primary btn-lg w-100 mb-2">
-                            <i class="bi bi-bag-check-fill me-1"></i> Place Order & Get Token
+                        <button type="button" id="payButton" onclick="onProceedToPay()" class="btn btn-primary btn-lg w-100 mb-2 py-3 fw-bold shadow-sm">
+                            <i class="bi bi-lock-fill me-1"></i> Proceed to Pay ₹@grandTotal.ToString("F2")
                         </button>
+
+                        <div class="text-center small text-muted mb-3">
+                            <i class="bi bi-shield-check text-success me-1"></i> Secure Test Payment Integration
+                        </div>
+
                         <a asp-controller="Cart" asp-action="Index" class="btn btn-sm btn-outline-secondary w-100">
                             Back to Cart
                         </a>
@@ -109,3 +166,101 @@
         </form>
     </div>
 </div>
+
+<!-- Razorpay Checkout JS -->
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+
+<script>
+    var selectedMethod = 'Online';
+
+    function handlePaymentMethodChange(method) {
+        selectedMethod = method;
+        document.getElementById('paymentMethodInput').value = method;
+
+        var cardOnline = document.getElementById('cardOnline');
+        var cardCash = document.getElementById('cardCash');
+        var summaryLabel = document.getElementById('summaryPaymentLabel');
+        var payButton = document.getElementById('payButton');
+
+        if (method === 'Online') {
+            cardOnline.classList.add('border-primary', 'bg-light');
+            cardCash.classList.remove('border-primary', 'bg-light');
+            summaryLabel.innerHTML = '<i class="bi bi-credit-card-2-front me-1"></i> Online (Razorpay)';
+            payButton.innerHTML = '<i class="bi bi-credit-card me-1"></i> Pay with Razorpay ₹@grandTotal.ToString("F2")';
+            payButton.className = 'btn btn-primary btn-lg w-100 mb-2 py-3 fw-bold shadow-sm';
+        } else {
+            cardCash.classList.add('border-primary', 'bg-light');
+            cardOnline.classList.remove('border-primary', 'bg-light');
+            summaryLabel.innerHTML = '<i class="bi bi-cash-stack text-success me-1"></i> Cash on Pickup';
+            payButton.innerHTML = '<i class="bi bi-bag-check-fill me-1"></i> Place Order (Pay on Pickup)';
+            payButton.className = 'btn btn-success btn-lg w-100 mb-2 py-3 fw-bold shadow-sm';
+        }
+    }
+
+    // Initialize styling on load
+    handlePaymentMethodChange('Online');
+
+    function onProceedToPay() {
+        if (selectedMethod === 'Cash') {
+            document.getElementById('paymentMethodInput').value = 'Cash';
+            document.getElementById('paymentStatusInput').value = 'Pending';
+            document.getElementById('paymentIdInput').value = '';
+            document.getElementById('orderForm').submit();
+            return;
+        }
+
+        // Online (Razorpay) Flow
+        var keyId = '@razorpayKeyId';
+        var amountPaise = @grandTotalPaise;
+
+        if (!keyId || keyId === 'rzp_test_YourKeyIdHere') {
+            // If placeholder key is still present, inform consumer but offer test demo simulation
+            console.warn('Razorpay Key ID is using placeholder from .env');
+        }
+
+        var options = {
+            "key": keyId,
+            "amount": amountPaise, // Amount in paise (e.g. 50000 = Rs 500)
+            "currency": "INR",
+            "name": "Bitely Food Court",
+            "description": "Payment for Food Order (₹@grandTotal.ToString("F2"))",
+            "image": "https://cdn-icons-png.flaticon.com/512/3081/3081840.png",
+            "prefill": {
+                "name": "@customerName",
+                "email": "@customerEmail",
+                "contact": "@customerPhone"
+            },
+            "theme": {
+                "color": "#0d6efd"
+            },
+            "handler": function (response) {
+                // Payment succeeded
+                if (response && response.razorpay_payment_id) {
+                    document.getElementById('paymentMethodInput').value = 'Online';
+                    document.getElementById('paymentIdInput').value = response.razorpay_payment_id;
+                    document.getElementById('paymentStatusInput').value = 'Paid';
+                    document.getElementById('orderForm').submit();
+                } else {
+                    alert('Payment received but no payment reference returned.');
+                }
+            },
+            "modal": {
+                "ondismiss": function () {
+                    console.log('Razorpay modal closed by user.');
+                }
+            }
+        };
+
+        try {
+            var rzp1 = new Razorpay(options);
+            rzp1.on('payment.failed', function (response) {
+                alert('Payment Failed: ' + (response.error.description || 'Unknown error occurred'));
+            });
+            rzp1.open();
+        } catch (err) {
+            console.error('Error opening Razorpay checkout:', err);
+            alert('Could not initialize Razorpay checkout. Please check your internet connection or verify Razorpay key configuration in .env.');
+        }
+    }
+</script>
+

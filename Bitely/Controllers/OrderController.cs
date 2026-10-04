@@ -66,13 +66,19 @@ namespace Bitely.Controllers
                 return RedirectToAction("Index", "Cart");
             }
 
+            var customer = await _context.Users.FindAsync(userId);
+            ViewBag.CustomerName = customer?.Name ?? customer?.UserName ?? "Customer";
+            ViewBag.CustomerEmail = customer?.Email ?? "";
+            ViewBag.CustomerPhone = customer?.PhoneNumber ?? "";
+            ViewBag.RazorpayKeyId = Environment.GetEnvironmentVariable("RAZORPAY_KEY_ID") ?? "rzp_test_YourKeyIdHere";
+
             return View(cart);
         }
 
         // Buy full cart and notify all related stall owners
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public async Task<IActionResult> PlaceOrder(string? customerNote)
+        public async Task<IActionResult> PlaceOrder(string? customerNote, string paymentMethod = "Cash", string? paymentId = null, string paymentStatus = "Pending")
         {
             var userId = GetCurrentUserId();
             if (userId == null)
@@ -94,6 +100,11 @@ namespace Bitely.Controllers
                 TempData["ErrorMessage"] = "Your cart is empty. Please add items before checking out.";
                 return RedirectToAction("Index", "Cart");
             }
+
+            // Normalise payment info
+            var isOnline = string.Equals(paymentMethod, "Online", StringComparison.OrdinalIgnoreCase);
+            var actualPaymentMethod = isOnline ? "Online" : "Cash";
+            var actualPaymentStatus = isOnline ? (string.IsNullOrEmpty(paymentStatus) ? "Paid" : paymentStatus) : "Pending";
 
             // Group items by Food Stall
             var stallGroups = cart.CartItems
@@ -117,6 +128,9 @@ namespace Bitely.Controllers
                     FoodStallId = stall.Id,
                     TotalAmount = totalAmount,
                     Status = "Pending",
+                    PaymentMethod = actualPaymentMethod,
+                    PaymentId = paymentId,
+                    PaymentStatus = actualPaymentStatus,
                     CustomerNote = customerNote,
                     CreatedAt = DateTime.UtcNow
                 };
@@ -140,11 +154,12 @@ namespace Bitely.Controllers
                 if (!string.IsNullOrEmpty(stall.OwnerId))
                 {
                     var itemSummary = string.Join(", ", items.Select(i => $"{i.Quantity}x {i.MenuItem?.Name}"));
+                    var paymentLabel = actualPaymentMethod == "Online" ? $"Online Paid (ID: {paymentId})" : "Cash on Pickup";
                     var notification = new Notification
                     {
                         UserId = stall.OwnerId,
-                        Title = $"New Order #{orderNumber} Received!",
-                        Message = $"{customerName} placed an order for '{stall.Name}': {itemSummary}. Total: ${totalAmount:F2}.",
+                        Title = $"New Order #{orderNumber} Received! ({actualPaymentMethod})",
+                        Message = $"{customerName} placed an order for '{stall.Name}': {itemSummary}. Total: ₹{totalAmount:F2} [{paymentLabel}].",
                         FoodStallId = stall.Id,
                         Order = order,
                         CreatedAt = DateTime.UtcNow,
@@ -160,7 +175,11 @@ namespace Bitely.Controllers
 
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"Thank you! Your order has been placed successfully for {createdOrders.Count} stall(s). The stall owners have been notified.";
+            var successMsg = actualPaymentMethod == "Online"
+                ? $"Payment successful! Your order has been placed for {createdOrders.Count} stall(s). Razorpay Payment ID: {paymentId}."
+                : $"Thank you! Your order has been placed for {createdOrders.Count} stall(s). Please pay cash at the counter upon pickup.";
+
+            TempData["SuccessMessage"] = successMsg;
             return RedirectToAction(nameof(Index));
         }
 
@@ -238,8 +257,10 @@ namespace Bitely.Controllers
         [HttpPost]
         [ValidateAntiForgeryToken]
         [Authorize(Roles = Roles.FoodStallOwner)]
-        public async Task<IActionResult> UpdateStatus(int id, string newStatus)
+        public async Task<IActionResult> UpdateStatus(int id, string? newStatus = null, [FromForm(Name = "status")] string? status = null, string? returnUrl = null)
         {
+            var targetStatus = !string.IsNullOrWhiteSpace(newStatus) ? newStatus : status;
+
             var userId = GetCurrentUserId();
             if (userId == null)
             {
@@ -261,22 +282,27 @@ namespace Bitely.Controllers
             }
 
             var allowedStatuses = new[] { "Pending", "Preparing", "Ready", "Completed", "Cancelled" };
-            if (!allowedStatuses.Contains(newStatus))
+            if (string.IsNullOrWhiteSpace(targetStatus) || !allowedStatuses.Contains(targetStatus))
             {
                 TempData["ErrorMessage"] = "Invalid status update.";
+                if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+                {
+                    return Redirect(returnUrl);
+                }
                 return RedirectToAction(nameof(StallOrders), new { foodStallId = order.FoodStallId });
             }
 
-            order.Status = newStatus;
+            order.Status = targetStatus;
 
             // Notify the customer about status change
             if (!string.IsNullOrEmpty(order.CustomerId))
             {
+                var stallName = order.FoodStall?.Name ?? "Food Stall";
                 var notification = new Notification
                 {
                     UserId = order.CustomerId,
-                    Title = $"Order #{order.OrderNumber} Update: {newStatus}",
-                    Message = $"Your order from '{order.FoodStall.Name}' is now '{newStatus}'.",
+                    Title = $"Order #{order.OrderNumber} Update: {targetStatus}",
+                    Message = $"Your order from '{stallName}' is now '{targetStatus}'.",
                     FoodStallId = order.FoodStallId,
                     OrderId = order.Id,
                     CreatedAt = DateTime.UtcNow,
@@ -287,7 +313,12 @@ namespace Bitely.Controllers
 
             await _context.SaveChangesAsync();
 
-            TempData["SuccessMessage"] = $"Order #{order.OrderNumber} status updated to '{newStatus}'.";
+            TempData["SuccessMessage"] = $"Order #{order.OrderNumber} status updated to '{targetStatus}'.";
+
+            if (!string.IsNullOrEmpty(returnUrl) && Url.IsLocalUrl(returnUrl))
+            {
+                return Redirect(returnUrl);
+            }
             return RedirectToAction(nameof(StallOrders), new { foodStallId = order.FoodStallId });
         }
     }

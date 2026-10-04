@@ -37,29 +37,153 @@ body {
   background-color: var(--surface);
   border-bottom: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
-  padding: 0.75rem 0;
+  padding: 0.65rem 0;
+  transition: all 0.2s ease;
 }
 
 .navbar-brand {
   font-weight: 700;
-  font-size: 1.35rem;
-  color: var(--primary) !important;
+  font-size: 1.3rem;
+  color: var(--text-main) !important;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
+  text-decoration: none;
 }
 
-.nav-link {
+.brand-icon-box {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, var(--primary-light), #e0e7ff);
+  color: var(--primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.1);
+}
+
+.brand-name {
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--primary);
+}
+
+.nav-main-links .nav-link {
   font-weight: 500;
-  color: var(--text-muted) !important;
+  font-size: 0.925rem;
+  color: var(--secondary) !important;
   padding: 0.5rem 0.85rem !important;
   border-radius: var(--radius-md);
   transition: all 0.15s ease-in-out;
+  display: inline-flex;
+  align-items: center;
 }
 
-.nav-link:hover, .nav-link.active {
+.nav-main-links .nav-link:hover,
+.nav-main-links .nav-link.active {
   color: var(--primary) !important;
   background-color: var(--primary-light);
+}
+
+/* Navbar Action Icon Buttons (Notifications, Cart) */
+.nav-icon-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f8fafc;
+  color: var(--secondary);
+  font-size: 1.1rem;
+  transition: all 0.15s ease;
+  text-decoration: none;
+  border: 1px solid var(--border-color);
+}
+
+.nav-icon-btn:hover {
+  background-color: var(--primary-light);
+  color: var(--primary);
+  border-color: rgba(79, 70, 229, 0.3);
+  transform: translateY(-1px);
+}
+
+.nav-badge-count {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  background-color: var(--danger);
+  color: #ffffff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 0.15rem 0.4rem;
+  border-radius: 9999px;
+  border: 2px solid #ffffff;
+  line-height: 1;
+  min-width: 18px;
+  text-align: center;
+}
+
+/* User Profile Trigger & Dropdown */
+.user-profile-btn {
+  padding: 0.25rem 0.6rem !important;
+  border-radius: 9999px;
+  transition: background-color 0.15s ease;
+  text-decoration: none;
+}
+
+.user-profile-btn:hover,
+.user-profile-btn:focus {
+  background-color: #f1f5f9 !important;
+}
+
+.user-profile-btn::after {
+  margin-left: 0.4rem;
+  vertical-align: 0.15em;
+  color: var(--secondary);
+}
+
+.user-avatar-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--primary), #6366f1);
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.85rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.25);
+}
+
+.user-name-text {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--text-main);
+  max-width: 110px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.2;
+}
+
+.user-role-badge {
+  font-size: 0.675rem;
+  color: var(--secondary);
+  display: block;
+  line-height: 1;
+}
+
+.user-dropdown-menu {
+  min-width: 220px;
+  border-radius: var(--radius-lg);
+}
+
+.line-height-tight {
+  line-height: 1.2;
 }
 
 /* Main Content Area */

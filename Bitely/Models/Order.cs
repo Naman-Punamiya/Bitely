@@ -16,6 +16,9 @@ namespace Bitely.Models
 
         public decimal TotalAmount { get; set; }
         public string Status { get; set; } = "Pending";
+        public string PaymentMethod { get; set; } = "Cash"; // "Cash" or "Online"
+        public string? PaymentId { get; set; } // Razorpay Payment Id (pay_xxx)
+        public string PaymentStatus { get; set; } = "Pending"; // "Pending" or "Paid"
         public string? CustomerNote { get; set; }
 
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;

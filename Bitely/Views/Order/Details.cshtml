@@ -43,20 +43,62 @@
                 </span>
             </div>
 
+            @if (isStallOwner)
+            {
+                <div class="p-3 bg-light border-bottom">
+                    <form asp-action="UpdateStatus" method="post" class="d-flex align-items-center gap-2 flex-wrap">
+                        <input type="hidden" name="id" value="@Model.Id" />
+                        <input type="hidden" name="returnUrl" value="@Url.Action("Details", "Order", new { id = Model.Id })" />
+                        <label class="small fw-bold text-dark mb-0"><i class="bi bi-arrow-repeat me-1 text-primary"></i>Update Status:</label>
+                        <select name="newStatus" class="form-select form-select-sm w-auto">
+                            <option value="Pending" selected="@(Model.Status == "Pending")">Pending</option>
+                            <option value="Preparing" selected="@(Model.Status == "Preparing")">Preparing</option>
+                            <option value="Ready" selected="@(Model.Status == "Ready")">Ready for Pickup</option>
+                            <option value="Completed" selected="@(Model.Status == "Completed")">Completed</option>
+                            <option value="Cancelled" selected="@(Model.Status == "Cancelled")">Cancelled</option>
+                        </select>
+                        <button type="submit" class="btn btn-sm btn-primary">Save Status</button>
+                    </form>
+                </div>
+            }
+
             <div class="p-3 p-md-4">
                 <div class="row g-3 mb-4">
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="p-3 bg-light rounded-3 h-100 border">
                             <span class="text-muted small d-block mb-1"><i class="bi bi-shop text-primary me-1"></i> Food Stall</span>
                             <h6 class="fw-bold text-dark mb-1">@(Model.FoodStall?.Name ?? "Food Stall")</h6>
                             <small class="text-muted"><i class="bi bi-geo-alt me-1"></i> @(Model.FoodStall?.Location ?? "Food Court")</small>
                         </div>
                     </div>
-                    <div class="col-md-6">
+                    <div class="col-md-4">
                         <div class="p-3 bg-light rounded-3 h-100 border">
                             <span class="text-muted small d-block mb-1"><i class="bi bi-person text-primary me-1"></i> Customer</span>
                             <h6 class="fw-bold text-dark mb-1">@(Model.Customer?.Name ?? Model.Customer?.UserName ?? "Customer")</h6>
                             <small class="text-muted"><i class="bi bi-envelope me-1"></i> @(Model.Customer?.Email ?? "N/A")</small>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="p-3 bg-light rounded-3 h-100 border">
+                            <span class="text-muted small d-block mb-1"><i class="bi bi-wallet2 text-primary me-1"></i> Payment</span>
+                            <div class="d-flex align-items-center gap-2 mb-1">
+                                @if (Model.PaymentMethod == "Online")
+                                {
+                                    <span class="badge bg-primary"><i class="bi bi-credit-card me-1"></i> Online (Razorpay)</span>
+                                    <span class="badge bg-success">@Model.PaymentStatus</span>
+                                }
+                                else
+                                {
+                                    <span class="badge bg-secondary"><i class="bi bi-cash me-1"></i> Cash on Pickup</span>
+                                    <span class="badge bg-warning text-dark">Pay at Counter</span>
+                                }
+                            </div>
+                            @if (!string.IsNullOrEmpty(Model.PaymentId))
+                            {
+                                <small class="text-muted font-monospace d-block text-truncate" title="@Model.PaymentId">
+                                    ID: @Model.PaymentId
+                                </small>
+                            }
                         </div>
                     </div>
                 </div>
